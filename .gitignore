@@ -1,4 +1,5 @@
 config.py
+*.pyc
 *.js
 *.json
 /output
