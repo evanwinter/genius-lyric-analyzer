@@ -47,10 +47,12 @@ def search(search_term,outputfilename,client_access_token):
 			body = json_obj["response"]["hits"]
 
 			num_hits = len(body)
+			
 			if num_hits == 0:
 				if page == 1:
 					print("No results for: " + search_term)
 				break
+			
 			print("page {0}; num hits {1}".format(page, num_hits))	
 
 			# for result in body:

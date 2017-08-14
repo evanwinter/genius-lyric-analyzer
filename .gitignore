@@ -2,4 +2,5 @@ config.py
 config.pyc
 *.js
 *.json
+*.txt
 /output
