@@ -6,7 +6,7 @@
 
 * create a [genius api client](https://genius.com/api-clients/new)
 
-* create a file name `config.py` and enter your access token like so:
+* create a file named `config.py` and enter your access token like so:
 
 ```
 # config.py
