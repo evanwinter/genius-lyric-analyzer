@@ -11,7 +11,7 @@
 ```
 # config.py
 
-client_access_token = 'yourclientaccesstoken'
+client_access_token = 'yourclientaccesstoken'q
 ```
 
 ## get one song's lyrics
@@ -24,6 +24,7 @@ client_access_token = 'yourclientaccesstoken'
 
 
 ## to do
+* build UI, make this usable
 * strip punctuation from lyrics
 * use artists/:id/songs instead of search/{artist_name}
 * get all of artists' songs, not just top songs
