@@ -21,3 +21,10 @@ client_access_token = 'yourclientaccesstoken'
 ## get and analyze lyrics from an artist's top ten songs
 
 `python analyze-lyrics.py 'artistname'`
+
+
+## to do
+* strip punctuation from lyrics
+* use artists/:id/songs instead of search/{artist_name}
+* get all of artists' songs, not just top songs
+* more data analysis and better formatting

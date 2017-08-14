@@ -21,9 +21,15 @@ def setup(artist_name):
 	return lyrics_output
 
 def get_songs(artist_name, lyrics_output):
+
+	# TODO
+	# GET /artists/:id/songs instead of searching artist name
+	# get all their songs (20 per page I think)
+
 	search_url = api + "/search"
 	data = {'q': artist_name}
 	response = requests.get(search_url, data=data, headers=headers)
+	
 	response_json = response.json()
 
 	song_info = None
@@ -44,11 +50,11 @@ def get_songs(artist_name, lyrics_output):
 		song_api_path = song_info["result"]["api_path"]
 		lyrics = get_lyrics(song_api_path).lower()
 		with open(lyrics_output, 'a') as f:
-			f.write(lyrics)
+			# f.write(lyrics)
 			all_lyrics += lyrics
 
 	with open(lyrics_output, 'a') as f:
-		f.write(str(Counter(all_lyrics.split()).most_common()))
+		f.write(str(Counter(all_lyrics.split()).most_common()).replace(', (', '\n'))
 
 def get_lyrics(song_api_path):
 	song_url = api + song_api_path
