@@ -63,6 +63,7 @@ def get_lyrics(song_api_path):
 	[h.extract() for h in html('script')]
 
 	lyrics = html.find("div", class_="lyrics").get_text()
+	print lyrics
 	return lyrics
 
 def main():
