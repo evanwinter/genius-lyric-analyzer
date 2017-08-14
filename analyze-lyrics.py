@@ -26,7 +26,6 @@ def get_songs(artist_name, lyrics_output):
 	response = requests.get(search_url, data=data, headers=headers)
 	response_json = response.json()
 
-	print("Looking for a match...")
 	song_info = None
 	
 	hits = response_json["response"]["hits"]
@@ -37,8 +36,11 @@ def get_songs(artist_name, lyrics_output):
 	lyrics = ''
 	all_lyrics = ''
 
+	print("Getting lyrics...")
+
 	for hit in hits:
 		song_info = hit
+		print('Stored lyrics for ' + song_info["result"]["title"])
 		song_api_path = song_info["result"]["api_path"]
 		lyrics = get_lyrics(song_api_path).lower()
 		with open(lyrics_output, 'a') as f:
