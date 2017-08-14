@@ -27,4 +27,4 @@ client_access_token = 'yourclientaccesstoken'
 * strip punctuation from lyrics
 * use artists/:id/songs instead of search/{artist_name}
 * get all of artists' songs, not just top songs
-* more data analysis and better formatting
+* more data analysis and better formatting -- D3?
