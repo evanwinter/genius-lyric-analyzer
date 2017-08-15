@@ -4,3 +4,4 @@ config.pyc
 *.json
 *.txt
 /output
+/gitignore
