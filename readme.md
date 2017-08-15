@@ -14,13 +14,9 @@
 client_access_token = 'yourclientaccesstoken'q
 ```
 
-## get one song's lyrics
+## collect and analyze lyrics from an artist's discography
 
-`python get-song-lyrics.py 'songname' 'artistname'`
-
-## get and analyze lyrics from an artist's top ten songs
-
-`python analyze-lyrics.py 'artistname'`
+`python main.py 'artistname'`
 
 
 ## to do

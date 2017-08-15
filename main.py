@@ -20,7 +20,7 @@ def setup(artist_name):
 	output = "output/" + re.sub(r"[^A-Za-z]+", '', artist_name) + ".txt"
 	return output
 
-def get_songs(artist_id, output):
+def get_songs(artist_id, output, limit):
 
 	current_page = 1
 	next_page = True
@@ -31,8 +31,9 @@ def get_songs(artist_id, output):
 	artist_id_string = str(artist_id)
 	count = 0
 	all_count = 0
+	song_limit = limit
 
-	while (next_page):
+	while (next_page and all_count < song_limit):
 
 		artist_songs_url = api + "/artists/"+artist_id_string+"/songs"
 		params = {
@@ -116,11 +117,15 @@ def get_artist(artist_name):
 def main():
 	arguments = sys.argv[1:]
 	artist_name = arguments[0].translate(None, "\'\"")
+	if arguments[1]:
+		limit = arguments[1].translate(None, "\'\"")
+	else:
+		limit = 10000000
 	print('Looking for artist...')
 	artist_id = get_artist(artist_name)
 	output = setup(artist_name)
 	print('Getting lyrics to songs by ' + artist_name + '...')
-	get_songs(artist_id, output)
+	get_songs(artist_id, output, limit)
 
 if __name__ == '__main__':
 	main()
