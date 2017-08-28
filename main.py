@@ -10,7 +10,7 @@ from collections import Counter
 
 api = "https://api.genius.com"
 client_access_token = config.client_access_token
-headers = {'Authorization': 'Bearer ' + client_access_token}
+headers = { 'Authorization': 'Bearer ' + client_access_token }
 
 def setup(artist_name):
 	reload(sys)
@@ -19,6 +19,11 @@ def setup(artist_name):
 		os.makedirs("output/")
 	output = "output/" + re.sub(r"[^A-Za-z]+", '', artist_name) + ".txt"
 	return output
+
+def write_lyrics(song_title, artist_name, lyrics, output):
+	with open(output, 'a') as f:
+		f.write()
+		f.write(lyrics)
 
 def get_songs(artist_id, output, limit):
 
@@ -32,14 +37,15 @@ def get_songs(artist_id, output, limit):
 	count = 0
 	all_count = 0
 	song_limit = limit
+	print('Song limit: '+str(song_limit))
 
-	while (next_page and all_count < song_limit):
+	while ((next_page) and (all_count < song_limit)):
 
 		artist_songs_url = api + "/artists/"+artist_id_string+"/songs"
 		params = {
 			'page': current_page,
 			'sort': 'popularity',
-			'per_page': 50
+			'per_page': 10
 		}
 		data = {}
 		response = requests.get(artist_songs_url, data=data, headers=headers, params=params)
@@ -55,11 +61,13 @@ def get_songs(artist_id, output, limit):
 
 		for song in songs_list:
 			all_count += 1
+			print('All count: '+str(all_count))
 			song_api_path = song["api_path"]
 			if (song["primary_artist"]["id"] == artist_id):
 				if ('tracklist' not in song["title"].lower()):
 					print('Stored lyrics for ' + song["title"] + '.')
 					count += 1
+					print('Stored count: '+str(count))
 					lyrics = get_lyrics(song_api_path).lower()
 
 					all_lyrics += lyrics
@@ -71,8 +79,9 @@ def get_songs(artist_id, output, limit):
 				print('Not primary artist on ' + song["title"])
 
 	print("Analyzing lyrics...")
-	with open(output, 'a') as f:
-		f.write(str(Counter(all_lyrics.split()).most_common()).replace(', (', '\n'))
+	print ()
+	with open('analyses.txt', 'a') as af:
+		af.write(str(Counter(all_lyrics.split()).most_common()).replace(', (', '\n'))
 	
 	print('Songs looked at: ' + str(all_count))
 	print('Songs scraped: ' + str(count))
@@ -117,7 +126,7 @@ def get_artist(artist_name):
 def main():
 	arguments = sys.argv[1:]
 	artist_name = arguments[0].translate(None, "\'\"")
-	if arguments[1]:
+	if len(arguments) > 1:
 		limit = arguments[1].translate(None, "\'\"")
 	else:
 		limit = 10000000

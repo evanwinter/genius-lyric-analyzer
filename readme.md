@@ -11,7 +11,7 @@
 ```
 # config.py
 
-client_access_token = 'yourclientaccesstoken'q
+client_access_token = 'yourclientaccesstoken'
 ```
 
 ## collect and analyze lyrics from an artist's discography
