@@ -42,21 +42,23 @@ def format_output(lyrics):
 	formatted_output = str(analyzed_lyrics).replace("[('", '').replace("), ('", '\n').replace("',", ':')
 	return formatted_output
 
-def filter_songs( songs_list ):
-	songs_list = songs_list
-
 def fits_criteria( song, artist_id ):
 	fits = True
 	song = song
 
 	if (song['primary_artist']['id'] != artist_id):
+		print("Not primary artist.")
 		fits = False
 	if ('tracklist' in song['title'].lower().replace("[",'').replace("]",'')):
+		print("Tracklist ignored.")
+		fits = False
+	if ('credits' in song['title'].lower().replace("[",'').replace("]",'')):
+		print("Credits ignored.")
 		fits = False
 
 	return fits
 
-def get_songs(artist_id, output, limit):
+def get_songs( artist_id, artist_name, output, limit ):
 
 	current_page = 1
 	next_page = True
@@ -85,26 +87,27 @@ def get_songs(artist_id, output, limit):
 
 		if songs_list:
 			songs_array += songs_list
-			print('Trying page ' + str(current_page))
 			current_page += 1
 		else:
 			next_page = False
 
 		for song in songs_list:
+			
 			print('Name: '+song['title'])
 			all_count += 1
-			song_api_path = song["api_path"]
-			lyrics = get_lyrics(song_api_path).lower()
+			
+			lyrics = get_lyrics(song['api_path']).lower()
 
-			with open(output, 'a') as f:
-				if (fits_criteria(song, artist_id)):
+			if (fits_criteria(song, artist_id)):
+				with open(output, 'a') as f:
+					f.write('Name: ' + song['title'])
+					f.write('\n----------------------')
 					f.write(lyrics)
 					print('Stored lyrics for ' + song['title'] + '.')
-					count+=1
-					print('Stored count: '+str(count))
+					count += 1
+					print('Stored count: ' + str(count))
 					all_lyrics += lyrics
 
-			print('All count: '+str(all_count))
 			print('')
 
 
@@ -126,12 +129,14 @@ def get_songs(artist_id, output, limit):
 	time.sleep(1)
 	print("Done.")
 
-	with open('analyses.txt', 'a') as af:
-		af.write(formatted_output)
+	analysis_output = "output/" + re.sub(r"[^A-Za-z]+", '', artist_name) + "-analysis.txt"
+
+	with open(analysis_output, 'a') as ao:
+		ao.write(formatted_output)
 
 	return output
 
-def get_lyrics(song_api_path):
+def get_lyrics( song_api_path ):
 	song_url = api + song_api_path
 	response = requests.get(song_url, headers=headers)
 	response_json = response.json()
@@ -146,7 +151,7 @@ def get_lyrics(song_api_path):
 	lyrics = html.find("div", class_="lyrics").get_text()
 	return lyrics
 
-def get_artist(artist_name):
+def get_artist( artist_name ):
 
 	search_url = api + "/search"
 	data = {'q': artist_name}
@@ -166,17 +171,23 @@ def get_artist(artist_name):
 	return top_artist_id
 
 def main():
+	
 	arguments = sys.argv[1:]
 	artist_name = arguments[0]
+	
 	if len(arguments) > 1:
 		limit = arguments[1]
 	else:
 		limit = 5
+	
 	print('Looking for artist...')
 	artist_id = get_artist(artist_name)
+
+	print('Preparing to get lyrics...')
 	output = setup(artist_name)
-	print('Getting lyrics to songs by ' + artist_name + '...')
-	get_songs(artist_id, output, limit)
+	
+	print('Getting lyrics to songs by ' + artist_name.upper() + '...')
+	get_songs(artist_id, artist_name, output, limit)
 
 if __name__ == '__main__':
 	main()
