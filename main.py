@@ -25,6 +25,17 @@ def write_lyrics(song_title, artist_name, lyrics, output):
 		f.write()
 		f.write(lyrics)
 
+def format_lyrics(lyrics):
+	formatted_lyrics = lyrics.split()
+	formatted_lyrics = [''.join(c for c in s if c not in string.punctuation) for s in formatted_lyrics]
+	formatted_lyrics = [s for s in formatted_lyrics if s]
+	formatted_lyrics = str(formatted_lyrics).replace(', (', '\n').replace("',", '').replace("u'", '')
+	return formatted_lyrics
+
+def format_output(lyrics):
+	formatted_output = str(Counter(lyrics.split()).most_common()).replace("[('", '').replace("), ('", '\n').replace("',", ':')
+	return formatted_output
+
 def get_songs(artist_id, output, limit):
 
 	current_page = 1
@@ -64,8 +75,8 @@ def get_songs(artist_id, output, limit):
 			print('All count: '+str(all_count))
 			song_api_path = song["api_path"]
 			if (song["primary_artist"]["id"] == artist_id):
-				if ('tracklist' not in song["title"].lower()):
-					print('Stored lyrics for ' + song["title"] + '.')
+				if ('tracklist' not in song['title'].lower()):
+					print('Stored lyrics for ' + song['title'] + '.')
 					count += 1
 					print('Stored count: '+str(count))
 					lyrics = get_lyrics(song_api_path).lower()
@@ -74,17 +85,18 @@ def get_songs(artist_id, output, limit):
 					with open(output, 'a') as f:
 						f.write(lyrics)
 				else:
-					print("Tracklist ignored.")
+					print('Tracklist ignored.')
 			else:
 				print('Not primary artist on ' + song["title"])
 
-	print("Analyzing lyrics...")
-	print ()
-	with open('analyses.txt', 'a') as af:
-		af.write(str(Counter(all_lyrics.split()).most_common()).replace(', (', '\n'))
-	
 	print('Songs looked at: ' + str(all_count))
 	print('Songs scraped: ' + str(count))
+	print("Analyzing lyrics...")
+	formatted_lyrics = format_lyrics(all_lyrics)
+	formatted_output = format_output(formatted_lyrics)
+
+	with open('analyses.txt', 'a') as af:
+		af.write(formatted_output)
 
 	return output
 
@@ -122,14 +134,13 @@ def get_artist(artist_name):
 
 	return top_artist_id
 
-
 def main():
 	arguments = sys.argv[1:]
-	artist_name = arguments[0].translate(None, "\'\"")
+	artist_name = arguments[0]
 	if len(arguments) > 1:
-		limit = arguments[1].translate(None, "\'\"")
+		limit = arguments[1]
 	else:
-		limit = 10000000
+		limit = 5
 	print('Looking for artist...')
 	artist_id = get_artist(artist_name)
 	output = setup(artist_name)
