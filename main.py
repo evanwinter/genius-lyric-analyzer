@@ -4,6 +4,7 @@ import re
 import requests
 import json
 import string
+import time
 from bs4 import BeautifulSoup
 import config
 from collections import Counter
@@ -25,6 +26,10 @@ def write_lyrics(song_title, artist_name, lyrics, output):
 		f.write()
 		f.write(lyrics)
 
+def analyze_lyrics(lyrics):
+	analyzed_lyrics = Counter(lyrics.split()).most_common()
+	return analyzed_lyrics
+
 def format_lyrics(lyrics):
 	formatted_lyrics = lyrics.split()
 	formatted_lyrics = [''.join(c for c in s if c not in string.punctuation) for s in formatted_lyrics]
@@ -33,8 +38,23 @@ def format_lyrics(lyrics):
 	return formatted_lyrics
 
 def format_output(lyrics):
-	formatted_output = str(Counter(lyrics.split()).most_common()).replace("[('", '').replace("), ('", '\n').replace("',", ':')
+	analyzed_lyrics = lyrics
+	formatted_output = str(analyzed_lyrics).replace("[('", '').replace("), ('", '\n').replace("',", ':')
 	return formatted_output
+
+def filter_songs( songs_list ):
+	songs_list = songs_list
+
+def fits_criteria( song, artist_id ):
+	fits = True
+	song = song
+
+	if (song['primary_artist']['id'] != artist_id):
+		fits = False
+	if ('tracklist' in song['title'].lower().replace("[",'').replace("]",'')):
+		fits = False
+
+	return fits
 
 def get_songs(artist_id, output, limit):
 
@@ -71,29 +91,40 @@ def get_songs(artist_id, output, limit):
 			next_page = False
 
 		for song in songs_list:
+			print('Name: '+song['title'])
 			all_count += 1
-			print('All count: '+str(all_count))
 			song_api_path = song["api_path"]
-			if (song["primary_artist"]["id"] == artist_id):
-				if ('tracklist' not in song['title'].lower()):
-					print('Stored lyrics for ' + song['title'] + '.')
-					count += 1
-					print('Stored count: '+str(count))
-					lyrics = get_lyrics(song_api_path).lower()
+			lyrics = get_lyrics(song_api_path).lower()
 
+			with open(output, 'a') as f:
+				if (fits_criteria(song, artist_id)):
+					f.write(lyrics)
+					print('Stored lyrics for ' + song['title'] + '.')
+					count+=1
+					print('Stored count: '+str(count))
 					all_lyrics += lyrics
-					with open(output, 'a') as f:
-						f.write(lyrics)
-				else:
-					print('Tracklist ignored.')
-			else:
-				print('Not primary artist on ' + song["title"])
+
+			print('All count: '+str(all_count))
+			print('')
+
 
 	print('Songs looked at: ' + str(all_count))
 	print('Songs scraped: ' + str(count))
 	print("Analyzing lyrics...")
+	
 	formatted_lyrics = format_lyrics(all_lyrics)
-	formatted_output = format_output(formatted_lyrics)
+	analyzed_lyrics = analyze_lyrics(formatted_lyrics)
+	formatted_output = format_output(analyzed_lyrics)
+	
+	print('.')
+	time.sleep(1)
+	print('..')
+	time.sleep(1)
+	print('...')
+	time.sleep(1)
+	print('....')
+	time.sleep(1)
+	print("Done.")
 
 	with open('analyses.txt', 'a') as af:
 		af.write(formatted_output)
