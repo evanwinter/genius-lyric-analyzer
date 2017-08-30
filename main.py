@@ -49,19 +49,19 @@ def fits_criteria( song, artist_id ):
 
 	return fits
 
-def final_analyze(lyrics):
+def analyze(lyrics):
 	# nltk.download()
-	# stop_words = set(nltk.corpus.stopwords.words('english'))
-	# stop_words.update(['.', ',', '"', '?', '!', ':', ';', '(', ')', '[', ']', '{', '}', '/'])
+	stop_words = set(nltk.corpus.stopwords.words('english'))
+	stop_words.update(['.', ',', "'", '"', '?', '!', ':', ';', '(', ')', '[', ']', '{', '}', '/'])
 
 	all_lyrics = lyrics
 
 	all_tokens = nltk.word_tokenize(all_lyrics)
 
-	all_tokens = [token.lower() for token in all_tokens] # if token.lower() not in stop_words
+	all_tokens = [token.lower() for token in all_tokens if token.lower() not in stop_words] # if token.lower() not in stop_words
 	print(all_tokens)
 	fdist = nltk.FreqDist(all_tokens)
-	fdist.plot(50)
+	fdist.plot(10)
 
 def get_songs(artist_id, output, limit):
 
@@ -133,7 +133,7 @@ def get_songs(artist_id, output, limit):
 
 	print(all_lyrics)
 
-	final_analyze(all_lyrics)
+	analyze(all_lyrics)
 
 	with open('analyses.txt', 'a') as af:
 		af.write(formatted_output)

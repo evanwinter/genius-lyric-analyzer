@@ -21,6 +21,6 @@ client_access_token = 'yourclientaccesstoken'
 
 ## to do
 * build UI, make this usable
-* strip punctuation from lyrics
+* ~~strip punctuation from lyrics~~
 * ~~get all of artists' songs, not just top songs~~
 * more data analysis and better formatting -- D3?
