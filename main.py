@@ -8,6 +8,7 @@ import time
 from bs4 import BeautifulSoup
 import config
 from collections import Counter
+import nltk
 
 api = "https://api.genius.com"
 client_access_token = config.client_access_token
@@ -58,6 +59,20 @@ def fits_criteria( song, artist_id ):
 
 	return fits
 
+def analyze(lyrics):
+	nltk.download()
+	# stop_words = set(nltk.corpus.stopwords.words('english'))
+	# stop_words.update(['.', ',', "'", '"', '?', '!', ':', ';', '(', ')', '[', ']', '{', '}', '/'])
+
+	all_lyrics = lyrics
+
+	all_tokens = nltk.word_tokenize(all_lyrics)
+
+	all_tokens = [token.lower() for token in all_tokens] # if token.lower() not in stop_words
+	print(all_tokens)
+	fdist = nltk.FreqDist(all_tokens)
+	fdist.plot(10)
+
 def get_songs( artist_id, artist_name, output, limit ):
 
 	current_page = 1
@@ -78,7 +93,7 @@ def get_songs( artist_id, artist_name, output, limit ):
 		params = {
 			'page': current_page,
 			'sort': 'popularity',
-			'per_page': 10
+			'per_page': 1
 		}
 		data = {}
 		response = requests.get(artist_songs_url, data=data, headers=headers, params=params)
@@ -114,20 +129,21 @@ def get_songs( artist_id, artist_name, output, limit ):
 	print('Songs looked at: ' + str(all_count))
 	print('Songs scraped: ' + str(count))
 	print("Analyzing lyrics...")
-	
-	formatted_lyrics = format_lyrics(all_lyrics)
-	analyzed_lyrics = analyze_lyrics(formatted_lyrics)
-	formatted_output = format_output(analyzed_lyrics)
+
+	formatted_output = format_output(analyze_lyrics(format_lyrics(all_lyrics)))
 	
 	print('.')
-	time.sleep(1)
+	time.sleep(.2)
 	print('..')
-	time.sleep(1)
+	time.sleep(.2)
 	print('...')
-	time.sleep(1)
+	time.sleep(.2)
 	print('....')
-	time.sleep(1)
+	time.sleep(.2)
 	print("Done.")
+
+	print(all_lyrics)
+	analyze(all_lyrics)
 
 	analysis_output = "output/" + re.sub(r"[^A-Za-z]+", '', artist_name) + "-analysis.txt"
 
