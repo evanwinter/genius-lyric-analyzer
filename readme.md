@@ -16,7 +16,7 @@ client_access_token = 'yourclientaccesstoken'
 
 ## collect and analyze lyrics from an artist's discography
 
-`python main.py 'artistname'`
+`python main.py 'artist name'`
 
 
 ## to do
