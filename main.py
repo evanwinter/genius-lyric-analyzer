@@ -1,209 +1,162 @@
 import sys
 import os
 import re
+import config
 import requests
 import json
-import string
-import time
 from bs4 import BeautifulSoup
-import config
 from collections import Counter
+import string
 import nltk
+import time
 
 api = "https://api.genius.com"
+genius_url = "http://genius.com"
 client_access_token = config.client_access_token
 headers = { 'Authorization': 'Bearer ' + client_access_token }
 
-def setup(artist_name):
-	reload(sys)
-	sys.setdefaultencoding('utf8')
-	if not os.path.exists("output/"):
-		os.makedirs("output/")
-	output = "output/" + re.sub(r"[^A-Za-z]+", '', artist_name) + ".txt"
-	return output
+def get_artist_from_name( artist_name ):
+	search_url = api + "/search"
+	data = { 'q': artist_name }
+	res = requests.get( search_url, data=data, headers=headers )
 
-def write_lyrics(song_title, artist_name, lyrics, output):
-	with open(output, 'a') as f:
-		f.write()
-		f.write(lyrics)
+	response = res.json()
+	hits = response['response']['hits']
+	
+	if len(hits) == 0:
+		print('No results for ' + artist_name + '.')
+		sys.exit('Exiting program.')
+	
+	artist = hits[0]['result']['primary_artist']
 
-def analyze_lyrics(lyrics):
-	analyzed_lyrics = Counter(lyrics.split()).most_common()
-	return analyzed_lyrics
+	return artist
 
-def format_lyrics(lyrics):
-	formatted_lyrics = lyrics.split()
-	formatted_lyrics = [''.join(c for c in s if c not in string.punctuation) for s in formatted_lyrics]
-	formatted_lyrics = [s for s in formatted_lyrics if s]
-	formatted_lyrics = str(formatted_lyrics).replace(', (', '\n').replace("',", '').replace("u'", '')
-	return formatted_lyrics
-
-def format_output(lyrics):
-	analyzed_lyrics = lyrics
-	formatted_output = str(analyzed_lyrics).replace("[('", '').replace("), ('", '\n').replace("',", ':')
-	return formatted_output
-
-def fits_criteria( song, artist_id ):
-	fits = True
-	song = song
-
-	if (song['primary_artist']['id'] != artist_id):
-		print("Not primary artist.")
-		fits = False
-	if ('tracklist' in song['title'].lower().replace("[",'').replace("]",'')):
-		print("Tracklist ignored.")
-		fits = False
-	if ('credits' in song['title'].lower().replace("[",'').replace("]",'')):
-		print("Credits ignored.")
-		fits = False
-
-	return fits
-
-def analyze(lyrics):
-	nltk.download()
-	# stop_words = set(nltk.corpus.stopwords.words('english'))
-	# stop_words.update(['.', ',', "'", '"', '?', '!', ':', ';', '(', ')', '[', ']', '{', '}', '/'])
-
-	all_lyrics = lyrics
-
-	all_tokens = nltk.word_tokenize(all_lyrics)
-
-	all_tokens = [token.lower() for token in all_tokens] # if token.lower() not in stop_words
-	print(all_tokens)
-	fdist = nltk.FreqDist(all_tokens)
-	fdist.plot(10)
-
-def get_songs( artist_id, artist_name, output, limit ):
+def get_songs( artist ):
 
 	current_page = 1
 	next_page = True
-	songs_array = []
 
-	lyrics = ''
+	song_lyrics = ''
 	all_lyrics = ''
-	artist_id_string = str(artist_id)
-	count = 0
-	all_count = 0
-	song_limit = limit
-	print('Song limit: '+str(song_limit))
+	all_songs = []
 
-	while ((next_page) and (all_count < song_limit)):
+	while next_page:
 
-		artist_songs_url = api + "/artists/"+artist_id_string+"/songs"
+		artist_songs_url = api + '/artists/' + str(artist['id']) + '/songs'
 		params = {
 			'page': current_page,
 			'sort': 'popularity',
 			'per_page': 1
 		}
 		data = {}
-		response = requests.get(artist_songs_url, data=data, headers=headers, params=params)
-		response_json = response.json()
-		songs_list = response_json["response"]["songs"]
+		res = requests.get(artist_songs_url, data=data, headers=headers, params=params)
+		response = res.json()
+		songs = response['response']['songs']
 
-		if songs_list:
-			songs_array += songs_list
+		if songs:
 			current_page += 1
+
 		else:
 			next_page = False
 
-		for song in songs_list:
-			
-			print('Name: '+song['title'])
-			all_count += 1
-			
-			lyrics = get_lyrics(song['api_path']).lower()
+		all_songs += songs
 
-			if (fits_criteria(song, artist_id)):
-				with open(output, 'a') as f:
-					f.write('Name: ' + song['title'])
-					f.write('\n----------------------')
-					f.write(lyrics)
-					print('Stored lyrics for ' + song['title'] + '.')
-					count += 1
-					print('Stored count: ' + str(count))
-					all_lyrics += lyrics
+	return all_songs
 
-			print('')
+def setup_output( artist ):
+	reload(sys)
+	sys.setdefaultencoding('utf8')
+	if not os.path.exists('output/'):
+		os.makedirs('output/')
+	output_file = 'output/' + re.sub(r"[^A-Za-z]+", '', artist['name'].lower()) + '.txt'
+	return output_file
 
+def get_song_lyrics( song ):
+	this_song = song
+	song_lyrics_url = genius_url + this_song['path']
 
-	print('Songs looked at: ' + str(all_count))
-	print('Songs scraped: ' + str(count))
-	print("Analyzing lyrics...")
-
-	formatted_output = format_output(analyze_lyrics(format_lyrics(all_lyrics)))
-	
-	print('.')
-	time.sleep(.2)
-	print('..')
-	time.sleep(.2)
-	print('...')
-	time.sleep(.2)
-	print('....')
-	time.sleep(.2)
-	print("Done.")
-
-	print(all_lyrics)
-	analyze(all_lyrics)
-
-	analysis_output = "output/" + re.sub(r"[^A-Za-z]+", '', artist_name) + "-analysis.txt"
-
-	with open(analysis_output, 'a') as ao:
-		ao.write(formatted_output)
-
-	return output
-
-def get_lyrics( song_api_path ):
-	song_url = api + song_api_path
-	response = requests.get(song_url, headers=headers)
-	response_json = response.json()
-	path = response_json["response"]["song"]["path"]
-
-	page_url = "http://genius.com" + path
-	page = requests.get(page_url)
+	page = requests.get(song_lyrics_url)
 	html = BeautifulSoup(page.text, "html.parser")
-
 	[h.extract() for h in html('script')]
+	song_lyrics = html.find("div", class_="lyrics").get_text()
 
-	lyrics = html.find("div", class_="lyrics").get_text()
-	return lyrics
+	return song_lyrics
 
-def get_artist( artist_name ):
-
-	search_url = api + "/search"
-	data = {'q': artist_name}
-	response = requests.get(search_url, data=data, headers=headers)
+def fits_criteria( song, artist ):
 	
-	response_json = response.json()
+	passes_filter = True
 
-	song_info = None
-	
-	hits = response_json["response"]["hits"]
-	num_hits = len(hits)
-	if num_hits == 0:
-		print("No results for: " + artist_name + ".")
-	
-	top_artist_id = response_json["response"]["hits"][0]["result"]["primary_artist"]["id"]
+	if "tracklist" in song['title'].lower():
+		print('Tracklist ignored.')
+		passes_filter = False
+	if artist['id'] != song['primary_artist']['id']:
+		print('Not primary artist.')
+		passes_filter = False
+	if "credits" in song['title'].lower():
+		print('Credits ignored.')
+		passes_filter = False
 
-	return top_artist_id
+	return passes_filter
+	
+def get_all_lyrics( songs, artist, output_file ):
+	all_songs = songs
+	all_lyrics = ''
+
+	for song in all_songs:
+		print('')
+		print('Name: ' + song['title'])
+		if fits_criteria(song, artist):
+			song_lyrics = get_song_lyrics( song )
+			all_lyrics += song_lyrics
+			write_lyrics( song_lyrics, output_file )
+			print('Stored lyrics for ' + song['title'])
+	return all_lyrics
+
+def format_lyrics( lyrics ):
+	
+	formatted_lyrics = lyrics.split()
+	formatted_lyrics = [''.join(c for c in s if c not in string.punctuation) for s in formatted_lyrics]
+	formatted_lyrics = [s.lower() for s in formatted_lyrics if s]
+	formatted_lyrics = str(formatted_lyrics).replace(', (', '\n').replace("',", '').replace("u'", '').replace("[", '').replace("']", '')
+
+	return formatted_lyrics
+
+def write_lyrics( lyrics, output_file ):
+	with open(output_file, 'a') as f:
+		f.write(lyrics)
+
+def analyze_lyrics( lyrics, artist ):
+	all_tokens = nltk.word_tokenize( lyrics )
+
+	analysis_output_file = 'output/' + re.sub(r"[^A-Za-z]+", '', artist['name'].lower()) + '-analysis.txt'
+
+	analyzed_lyrics = Counter(lyrics.split()).most_common()
+
+	with open(analysis_output_file, 'w') as f:
+		f.write(str(analyzed_lyrics))
+
+	fdist = nltk.FreqDist(all_tokens)
+	fdist.plot(20)
 
 def main():
-	
-	arguments = sys.argv[1:]
-	artist_name = arguments[0]
-	
-	if len(arguments) > 1:
-		limit = arguments[1]
-	else:
-		limit = 5
-	
-	print('Looking for artist...')
-	artist_id = get_artist(artist_name)
+	arguments = sys.argv[0:]
+	artist_name = arguments[1]
+	print('\n')
+	print('Looking up artist...')
+	artist = get_artist_from_name( artist_name )
 
-	print('Preparing to get lyrics...')
-	output = setup(artist_name)
+	print('\nSetting up output files...')
+	output_file = setup_output( artist )
 	
-	print('Getting lyrics to songs by ' + artist_name.upper() + '...')
-	get_songs(artist_id, artist_name, output, limit)
+	print('\nGetting lyrics to songs by ' + artist['name'].upper() + '...')
+	all_songs = get_songs( artist )
+	all_lyrics = get_all_lyrics( all_songs, artist, output_file )
+
+	print('\nFormatting lyrics for analysis...')
+	formatted_lyrics = format_lyrics( all_lyrics )
+
+	print('\nAnalyzing lyrics...')
+	analyze_lyrics( formatted_lyrics, artist )
 
 if __name__ == '__main__':
 	main()
