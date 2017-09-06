@@ -106,6 +106,20 @@ def get_limit_songs( artist, song_limit ):
 		count += 1
 
 	return limit_songs
+	
+def get_all_lyrics( songs, artist, output_file ):
+	all_songs = songs
+	all_lyrics = ''
+
+	for song in all_songs:
+		print('')
+		print('Name: ' + song['title'])
+		if fits_criteria(song, artist):
+			song_lyrics = get_song_lyrics( song )
+			all_lyrics += song_lyrics
+			write_lyrics( song_lyrics, output_file )
+			print('Stored lyrics for ' + song['title'])
+	return all_lyrics
 
 def get_song_lyrics( song ):
 	this_song = song
@@ -133,20 +147,6 @@ def fits_criteria( song, artist ):
 		passes_filter = False
 
 	return passes_filter
-	
-def get_all_lyrics( songs, artist, output_file ):
-	all_songs = songs
-	all_lyrics = ''
-
-	for song in all_songs:
-		print('')
-		print('Name: ' + song['title'])
-		if fits_criteria(song, artist):
-			song_lyrics = get_song_lyrics( song )
-			all_lyrics += song_lyrics
-			write_lyrics( song_lyrics, output_file )
-			print('Stored lyrics for ' + song['title'])
-	return all_lyrics
 
 def format_lyrics( lyrics ):
 	
@@ -176,7 +176,7 @@ def analyze_lyrics( lyrics, artist ):
 	# all_tokens = all_tokens - boring_words
 
 	fdist = nltk.FreqDist(all_tokens)
-	# fdist.plot(50)
+	fdist.plot(50)
 
 def main():
 	print('\nWelcome to the lyric analyzer!')

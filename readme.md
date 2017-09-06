@@ -1,4 +1,4 @@
-## song lyrics with genius api
+## Usage
 
 In your terminal, run the following prompts:
 
