@@ -1,3 +1,7 @@
+# Genius Lyric Analyzer
+
+
+
 ## Usage
 
 In your terminal, run the following prompts:
@@ -28,5 +32,20 @@ When prompted, enter the artist or band name and the number of songs you want to
 The following will occur:
 
 * A directory named `output/` will be created (if it doesn't already exist)
-* Song lyrics will be written to a text file named `artistname.txt`
-* Lyrics will be analyzed for word frequency, the results of which will be written to a text file named `artistname-analysis.txt`
+* Song lyrics will be written to a text file named `output/artistname.txt`
+* Lyrics will be analyzed for word frequency, the results of which will be written to a text file named `output/artistname-analysis.txt`
+
+## To do
+
+* Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)
+* Calculate 'word diversity'/level of difficulty of words used (can't remember what this is called) -- can be done with NLTK?
+* Better data visualization -- D3.js an option?
+* Get it to run in browser
+
+## Known issues/areas for improvement
+
+* Doesn't include this artist's guest verses on other artists' songs
+* Does include other artists' guest verses on this artist's songs
+* Because punctuation is stripped and all transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
+* Non-lyric terms like "verse," "chorus," and the artist's name are very common and end up high on frequency distribution
+* Majority of the 50-ish most common words end up being boring words like "i," "the," "you," etc
