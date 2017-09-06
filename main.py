@@ -3,6 +3,7 @@ import os
 import re
 import config
 import requests
+import csv
 import json
 from bs4 import BeautifulSoup
 from collections import Counter
@@ -31,7 +32,15 @@ def get_artist_from_name( artist_name ):
 
 	return artist
 
-def get_songs( artist ):
+def setup_output( artist ):
+	reload(sys)
+	sys.setdefaultencoding('utf8')
+	if not os.path.exists('output/'):
+		os.makedirs('output/')
+	output_file = 'output/' + re.sub(r"[^A-Za-z]+", '', artist['name'].lower()) + '.txt'
+	return output_file
+
+def get_all_songs( artist ):
 
 	current_page = 1
 	next_page = True
@@ -41,6 +50,40 @@ def get_songs( artist ):
 	all_songs = []
 
 	while next_page:
+
+		artist_songs_url = api + '/artists/' + str(artist['id']) + '/songs'
+		params = {
+			'page': current_page,
+			'sort': 'popularity',
+			'per_page': 50
+		}
+		data = {}
+		res = requests.get(artist_songs_url, data=data, headers=headers, params=params)
+		response = res.json()
+		songs = response['response']['songs']
+
+		if songs:
+			current_page += 1
+
+		else:
+			next_page = False
+
+		all_songs += songs
+
+	return all_songs
+
+def get_limit_songs( artist, song_limit ):
+
+	current_page = 1
+	next_page = True
+	limit = song_limit
+	count = 0
+
+	song_lyrics = ''
+	limit_lyrics = ''
+	limit_songs = []
+
+	while next_page and count < song_limit:
 
 		artist_songs_url = api + '/artists/' + str(artist['id']) + '/songs'
 		params = {
@@ -59,17 +102,10 @@ def get_songs( artist ):
 		else:
 			next_page = False
 
-		all_songs += songs
+		limit_songs += songs
+		count += 1
 
-	return all_songs
-
-def setup_output( artist ):
-	reload(sys)
-	sys.setdefaultencoding('utf8')
-	if not os.path.exists('output/'):
-		os.makedirs('output/')
-	output_file = 'output/' + re.sub(r"[^A-Za-z]+", '', artist['name'].lower()) + '.txt'
-	return output_file
+	return limit_songs
 
 def get_song_lyrics( song ):
 	this_song = song
@@ -130,27 +166,48 @@ def analyze_lyrics( lyrics, artist ):
 
 	analysis_output_file = 'output/' + re.sub(r"[^A-Za-z]+", '', artist['name'].lower()) + '-analysis.txt'
 
-	analyzed_lyrics = Counter(lyrics.split()).most_common()
+	most_common_words = Counter(all_tokens).most_common()
 
 	with open(analysis_output_file, 'w') as f:
-		f.write(str(analyzed_lyrics))
+		f.write(str(most_common_words).replace("[('", '').replace('[', '').replace(']', '').replace("('", '\n').replace("),", '').replace("', ", ',').replace(')', ''))
+
+	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my' ]
+
+	# all_tokens = all_tokens - boring_words
 
 	fdist = nltk.FreqDist(all_tokens)
-	fdist.plot(20)
+	# fdist.plot(50)
 
 def main():
-	arguments = sys.argv[0:]
-	artist_name = arguments[1]
-	print('\n')
-	print('Looking up artist...')
+	print('\nWelcome to the lyric analyzer!')
+	artist_name = raw_input("\nEnter an artist or band name: ")
+
+	print('\nLooking up artist...')
 	artist = get_artist_from_name( artist_name )
 
 	print('\nSetting up output files...')
 	output_file = setup_output( artist )
+
+	song_limit = None
+	while not song_limit:
+	    try:
+	        song_limit = raw_input("\nHow many songs? ('all' for all songs): ").lower()
+	        if (song_limit == "all"):
+	        	song_limit = 100000000000
+	        	print('\nFinding all songs by ' + artist['name'].upper() + '...')
+	        	songs = get_all_songs( artist )
+	        else:
+	        	song_limit = int(song_limit)
+	        	print('\nFinding the top ' + str(song_limit) + ' songs by ' + artist['name'].upper() + '...')
+	        	songs = get_limit_songs( artist, song_limit )
+	    except ValueError:
+        	print("Please enter a valid number or 'all'.")
+        	song_limit = None	
 	
-	print('\nGetting lyrics to songs by ' + artist['name'].upper() + '...')
-	all_songs = get_songs( artist )
-	all_lyrics = get_all_lyrics( all_songs, artist, output_file )
+	print('\nFound ' + str(len(songs)) + ' songs.')
+
+	print('\nScraping lyrics for each song...')
+	all_lyrics = get_all_lyrics( songs, artist, output_file )
 
 	print('\nFormatting lyrics for analysis...')
 	formatted_lyrics = format_lyrics( all_lyrics )
