@@ -6,8 +6,9 @@ In your command line run the following prompts:
 
 * `cd genius-scrape`
 
-Create a [genius api client](https://genius.com/api-clients/new), create a file named `config.py` in the project root and store your access token in it.
+Create a [Genius API Client](https://genius.com/api-clients/new) and copy your access token.
 
+Create a file named `config.py` in the project root, and store your access token in it.
 
 e.g.
 ```
@@ -16,9 +17,12 @@ e.g.
 client_access_token = 'yourclientaccesstoken'
 ```
 
-
+In your command line run:
 
 `python main.py`
+
+When prompted, enter the artist or band name and the number of songs you want to analyze (or `all` for their discography).
+
 
 
 ## to do
