@@ -3,13 +3,11 @@ import os
 import re
 import config
 import requests
-import csv
 import json
 from bs4 import BeautifulSoup
 from collections import Counter
 import string
 import nltk
-import time
 
 api = "https://api.genius.com"
 genius_url = "http://genius.com"
