@@ -6,7 +6,7 @@ In your command line run the following prompts:
 
 * `cd genius-scrape`
 
-* create a [genius api client](https://genius.com/api-clients/new), create a file named `config.py` in the project root and store your access token in it.
+Create a [genius api client](https://genius.com/api-clients/new), create a file named `config.py` in the project root and store your access token in it.
 
 
 e.g.
