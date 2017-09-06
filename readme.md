@@ -38,14 +38,17 @@ The following will occur:
 ## To do
 
 * Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)
+* Filter for "(Live", "[Live"
 * Calculate 'word diversity'/level of difficulty of words used (can't remember what this is called) -- can be done with NLTK?
 * Better data visualization -- D3.js an option?
 * Get it to run in browser
 
 ## Known issues/areas for improvement
 
-* Doesn't include this artist's guest verses on other artists' songs
-* Does include other artists' guest verses on this artist's songs
-* Because punctuation is stripped and all transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
-* Non-lyric terms like "verse," "chorus," and the artist's name are very common and end up high on frequency distribution
+* Doesn't count selected artist's guest verses
+* Counts others' guest verses
+* Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
+* Organizational terms like "verse" and "chorus," and the artist's name itself are common and usually end up high on frequency distribution
 * Majority of the 50-ish most common words end up being boring words like "i," "the," "you," etc
+* Ignores any song with "tracklist" or "credits" in title, might result in skipping actual songs here and there
+
