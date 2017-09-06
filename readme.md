@@ -42,11 +42,11 @@ The following will occur:
 * Calculate 'word diversity'/level of difficulty of words used (can't remember what this is called) -- can be done with NLTK?
 * Better data visualization -- D3.js an option?
 * Get it to run in browser
+* New folder for each artist's lyrics, analysis and plot i.e. `output/artistname/`
 
 ## Known issues/areas for improvement
 
-* Doesn't count selected artist's guest verses
-* Counts others' guest verses
+* Counts featured artists'/collaborators' lyrics too
 * Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
 * Organizational terms like "verse" and "chorus," and the artist's name itself are common and usually end up high on frequency distribution
 * Majority of the 50-ish most common words end up being boring words like "i," "the," "you," etc
