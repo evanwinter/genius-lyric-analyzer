@@ -7,7 +7,7 @@ import json
 from bs4 import BeautifulSoup
 from collections import Counter
 import string
-import nltk
+# import nltk
 
 api = "https://api.genius.com"
 genius_url = "http://genius.com"
@@ -108,15 +108,19 @@ def get_limit_songs( artist, song_limit ):
 def get_all_lyrics( songs, artist, output_file ):
 	all_songs = songs
 	all_lyrics = ''
+	count, all_count = 0
 
 	for song in all_songs:
-		print('')
+		all_count += 1
+		print('\n' + str(all_count))		
 		print('Name: ' + song['title'])
 		if fits_criteria(song, artist):
 			song_lyrics = get_song_lyrics( song )
 			all_lyrics += song_lyrics
-			write_lyrics( song_lyrics, output_file )
+			count += 1
+			write_lyrics( song, song_lyrics, output_file )
 			print('Stored lyrics for ' + song['title'])
+			print(str(count) + ' stored.')
 	return all_lyrics
 
 def get_song_lyrics( song ):
@@ -155,26 +159,28 @@ def format_lyrics( lyrics ):
 
 	return formatted_lyrics
 
-def write_lyrics( lyrics, output_file ):
+def write_lyrics( song, lyrics, output_file ):
 	with open(output_file, 'a') as f:
+		f.write( song['title'] )
+		f.write( '\n------------------------------------------------------\n------------------------------------------------------' )
 		f.write(lyrics)
 
 def analyze_lyrics( lyrics, artist ):
-	all_tokens = nltk.word_tokenize( lyrics )
+	# all_tokens = nltk.word_tokenize( lyrics )
 
 	analysis_output_file = 'output/' + re.sub(r"[^A-Za-z]+", '', artist['name'].lower()) + '-analysis.txt'
 
-	most_common_words = Counter(all_tokens).most_common()
+	most_common_words = Counter(lyrics.split()).most_common()
 
 	with open(analysis_output_file, 'w') as f:
 		f.write(str(most_common_words).replace("[('", '').replace('[', '').replace(']', '').replace("('", '\n').replace("),", '').replace("', ", ',').replace(')', ''))
 
-	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my' ]
+	# boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my' ]
 
 	# all_tokens = all_tokens - boring_words
 
-	fdist = nltk.FreqDist(all_tokens)
-	fdist.plot(50)
+	# fdist = nltk.FreqDist(all_tokens)
+	# fdist.plot(50)
 
 def main():
 	print('\nWelcome to the lyric analyzer!')
