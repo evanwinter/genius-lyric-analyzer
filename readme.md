@@ -32,19 +32,20 @@ When prompted, enter the artist or band name and the number of songs you want to
 The following will occur:
 
 * A directory named `output/` will be created (if it doesn't already exist)
+* a directory named `output/artistname` will be created (if it doesn't already exist)
 * Song lyrics will be written to a text file named `output/artistname.txt`
 * Lyrics will be analyzed for word frequency, the results of which will be written to a text file named `output/artistname-analysis.txt`
 
 ## To do
 
-* Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)
+* ~~Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)~~
 * Filter for "(Live", "[Live"
-* Calculate 'word diversity'/level of difficulty of words used (can't remember what this is called) -- can be done with NLTK?
+* ~~Calculate lexical diversity (unique words / all words)~~
 * Better data visualization -- D3.js an option?
 * Get it to run in browser
-* New folder for each artist's lyrics, analysis and plot i.e. `output/artistname/`
+* ~~New folder for each artist's lyrics, analysis and plot i.e. `output/artistname/`~~
 
-## Known issues/areas for improvement
+## Known issues/limitations/areas for improvement (probably won't fix)
 
 * Counts featured artists'/collaborators' lyrics too
 * Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
