@@ -119,8 +119,6 @@ def get_songs(artist_id, output, limit):
 	print('Songs scraped: ' + str(count))
 	print("Analyzing lyrics...")
 	
-	formatted_output = format_output(analyze_lyrics(format_lyrics(all_lyrics)))
-	
 	print('.')
 	time.sleep(.2)
 	print('..')
@@ -131,9 +129,8 @@ def get_songs(artist_id, output, limit):
 	time.sleep(.2)
 	print("Done.")
 
-	print(all_lyrics)
-
 	analyze(all_lyrics)
+	formatted_output = format_output(analyze_lyrics(format_lyrics(all_lyrics)))
 
 	with open('analyses.txt', 'a') as af:
 		af.write(formatted_output)
