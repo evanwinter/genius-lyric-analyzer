@@ -135,6 +135,7 @@ def get_song_lyrics(song):
 	page = requests.get(song_lyrics_url)
 	html = BeautifulSoup(page.text, "html.parser")
 	[h.extract() for h in html('script')]
+
 	song_lyrics = html.find("div", class_="lyrics").get_text()
 
 	return song_lyrics
@@ -143,15 +144,16 @@ def fits_criteria(song, artist):
 	
 	passes_filter = True
 
-	if "tracklist" in song['title'].lower():
-		print('Tracklist ignored.')
-		passes_filter = False
+	title_filterwords = [ "tracklist", "credits", "[speech", "(speech", "(live", "[live", "album art", "remix", "reprise", "live version", "version", "radio edit", "interview" ]
+
 	if artist['id'] != song['primary_artist']['id']:
 		print('Not primary artist.')
 		passes_filter = False
-	if "credits" in song['title'].lower():
-		print('Credits ignored.')
-		passes_filter = False
+	for filterword in title_filterwords:
+		if filterword in song['title'].lower():
+			print('Tracklist, credits, remix, live version or speech ignored.')
+			print('Flagged word: ' + filterword)
+			passes_filter = False
 
 	return passes_filter
 
@@ -166,7 +168,13 @@ def format_lyrics(lyrics):
 
 def write_lyrics(song, lyrics, output_file):
 	with open(output_file, 'a') as f:
-		f.write(song['title'])
+		f.write('\n------------------------------------------------------\n')
+		f.write('Title: ' + song['title'])
+		try:
+			pageviews = song['stats']['pageviews']
+			f.write('\nPageviews: ' + str(pageviews))
+		except:
+			f.write('\nPageview data unavailable.')
 		f.write('\n------------------------------------------------------\n')
 		f.write(lyrics)
 
@@ -188,16 +196,20 @@ def analyze_lyrics(lyrics, artist):
 
 	most_common_words = Counter(lyrics.split()).most_common()
 
-	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my', 'to', 'on', 'in', 'that', 'verse', 'chorus', 'wan', 'na', 'is', 'your', 'so', 'of', '' ]
+	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my', 'to', 'on', 'in', 'that', 'wan', 'na', 'is', 'your', 'so', 'of', 'its', 'for', 'at' ]
+	song_structure_words = [ 'verse', 'chorus', 'hook', 'prechorus' ]
 
-	filtered_tokens = [ x for x in all_tokens if x not in boring_words ]
+	filtered_tokens = [ x for x in all_tokens if ((x not in boring_words) and (x not in song_structure_words)) ]
 
 	lexical_diversity = get_lexical_diversity(lyrics)
 	print('Lexical diversity for ' + artist_name + ': ' + str(lexical_diversity) + ' or ' + str(percentage(len(filtered_tokens), len(lyrics.split()))) + '%.')
 
 	with open(analysis_output_file, 'w') as f:
-		f.write('Lexical diversity: ' + str(lexical_diversity))
-		f.write('\nNumber of words: ' + str(len(all_tokens)))
+		f.write('\n------------------------------------------------------\n')
+		f.write(artist_name)
+		f.write('\nLexical diversity: ' + str(lexical_diversity))
+		f.write('\nNumber of words: ' + str(len(all_tokens)) + '\n')
+		f.write('------------------------------------------------------\n')
 		f.write(str(most_common_words).replace("[('", '').replace('[', '').replace(']', '').replace("('", '\n').replace("),", '').replace("', ", ',').replace(')', ''))
 
 	fdist = nltk.FreqDist(filtered_tokens)
