@@ -11,8 +11,8 @@ import nltk
 
 api = "https://api.genius.com"
 genius_url = "http://genius.com"
-client_access_token = config.client_access_token
-headers = { 'Authorization': 'Bearer ' + client_access_token }
+CLIENT_ACCESS_TOKEN = config.client_access_token
+headers = { 'Authorization': 'Bearer ' + CLIENT_ACCESS_TOKEN }
 
 def get_artist_from_name(artist_name):
 	search_url = api + "/search"
@@ -118,7 +118,7 @@ def get_all_lyrics(songs, artist, output_file):
 	for song in all_songs:
 		all_count += 1
 		print('\n' + str(all_count))		
-		print('Name: ' + song['title'])
+		print('Name: ' + str(song['title']))
 		if fits_criteria(song, artist):
 			song_lyrics = get_song_lyrics(song)
 			all_lyrics += song_lyrics
@@ -197,9 +197,10 @@ def analyze_lyrics(lyrics, artist):
 	most_common_words = Counter(lyrics.split()).most_common()
 
 	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my', 'to', 'on', 'in', 'that', 'wan', 'na', 'is', 'your', 'so', 'of', 'its', 'for', 'at' ]
+	digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
 	song_structure_words = [ 'verse', 'chorus', 'hook', 'prechorus' ]
 
-	filtered_tokens = [ x for x in all_tokens if ((x not in boring_words) and (x not in song_structure_words)) ]
+	filtered_tokens = [ x for x in all_tokens if ((x not in boring_words) and (x not in song_structure_words) and (x not in digits)) ]
 
 	lexical_diversity = get_lexical_diversity(lyrics)
 	print('Lexical diversity for ' + artist_name + ': ' + str(lexical_diversity) + ' or ' + str(percentage(len(filtered_tokens), len(lyrics.split()))) + '%.')

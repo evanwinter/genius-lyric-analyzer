@@ -39,7 +39,8 @@ The following will occur:
 ## To do
 
 * ~~Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)~~
-* Filter for "(Live", "[Live"
+* tokenize artist name and filter from analysis -- always ends up in top 50
+* ~~Filter for "(Live", "[Live"~~
 * ~~Calculate lexical diversity (unique words / all words)~~
 * Better data visualization -- D3.js an option?
 * Get it to run in browser
