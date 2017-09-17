@@ -39,8 +39,9 @@ The following will occur:
 ## To do
 
 * Look up frequency of individual words
+* regex used for file setup takes "A$AP Rocky" and makes it "aaprocky" -- possible to replace $'s with "S's?
 * ~~Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)~~
-* tokenize artist name and filter from analysis -- always ends up in top 50
+* ~~tokenize artist name and filter from analysis -- always ends up in top 50~~
 * ~~Filter for "(Live", "[Live"~~
 * ~~Calculate lexical diversity (unique words / all words)~~
 * Better data visualization -- D3.js an option?
