@@ -38,6 +38,7 @@ The following will occur:
 
 ## To do
 
+* Look up frequency of individual words
 * ~~Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)~~
 * tokenize artist name and filter from analysis -- always ends up in top 50
 * ~~Filter for "(Live", "[Live"~~

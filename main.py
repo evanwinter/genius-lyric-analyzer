@@ -14,6 +14,8 @@ genius_url = "http://genius.com"
 CLIENT_ACCESS_TOKEN = config.client_access_token
 headers = { 'Authorization': 'Bearer ' + CLIENT_ACCESS_TOKEN }
 
+SCRAPED_COUNT = 0
+
 def get_artist_from_name(artist_name):
 	search_url = api + "/search"
 	data = { 'q': artist_name }
@@ -126,6 +128,7 @@ def get_all_lyrics(songs, artist, output_file):
 			write_lyrics(song, song_lyrics, output_file)
 			print('Stored lyrics for ' + song['title'])
 			print(str(count) + ' stored.')
+
 	return all_lyrics
 
 def get_song_lyrics(song):
@@ -144,16 +147,18 @@ def fits_criteria(song, artist):
 	
 	passes_filter = True
 
-	title_filterwords = [ "tracklist", "credits", "[speech", "(speech", "(live", "[live", "album art", "remix", "reprise", "live version", "version", "radio edit", "interview" ]
+	title_filterwords = [ "tracklist", "credits", "[speech", "(speech", "speech]", "speech)", "(live", "[live", "album art", "remix", "reprise)", "reprise]", "live version", "version)", "version]", "radio edit", "interview", "[hook", "[booklet" ]
 
 	if artist['id'] != song['primary_artist']['id']:
 		print('Not primary artist.')
 		passes_filter = False
+		return passes_filter
 	for filterword in title_filterwords:
 		if filterword in song['title'].lower():
 			print('Tracklist, credits, remix, live version or speech ignored.')
 			print('Flagged word: ' + filterword)
 			passes_filter = False
+			return passes_filter
 
 	return passes_filter
 
@@ -168,14 +173,14 @@ def format_lyrics(lyrics):
 
 def write_lyrics(song, lyrics, output_file):
 	with open(output_file, 'a') as f:
-		f.write('\n------------------------------------------------------\n')
-		f.write('Title: ' + song['title'])
+		f.write('------------------------------------------------------\n')
+		f.write('Title: ' + song['title'] + '\n')
 		try:
 			pageviews = song['stats']['pageviews']
-			f.write('\nPageviews: ' + str(pageviews))
+			f.write('Pageviews: ' + str(pageviews) + '\n')
 		except:
-			f.write('\nPageview data unavailable.')
-		f.write('\n------------------------------------------------------\n')
+			f.write('Pageview data unavailable.\n')
+		f.write('------------------------------------------------------\n')
 		f.write(lyrics)
 
 def get_lexical_diversity(lyrics):
@@ -198,18 +203,20 @@ def analyze_lyrics(lyrics, artist):
 
 	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my', 'to', 'on', 'in', 'that', 'wan', 'na', 'is', 'your', 'so', 'of', 'its', 'for', 'at' ]
 	digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-	song_structure_words = [ 'verse', 'chorus', 'hook', 'prechorus' ]
+	song_structure_words = [ '[intro', '[verse', '[chorus', '[hook', '[prechorus', '[bridge' ]
 
 	filtered_tokens = [ x for x in all_tokens if ((x not in boring_words) and (x not in song_structure_words) and (x not in digits)) ]
 
 	lexical_diversity = get_lexical_diversity(lyrics)
-	print('Lexical diversity for ' + artist_name + ': ' + str(lexical_diversity) + ' or ' + str(percentage(len(filtered_tokens), len(lyrics.split()))) + '%.')
+	lexical_diversity_percentage = percentage(len(filtered_tokens), len(lyrics.split()))
+	print('Lexical diversity for ' + artist_name + ': ' + str(lexical_diversity) + ' or ' + str(lexical_diversity_percentage) + '%.')
 
 	with open(analysis_output_file, 'w') as f:
-		f.write('\n------------------------------------------------------\n')
-		f.write(artist_name)
-		f.write('\nLexical diversity: ' + str(lexical_diversity))
-		f.write('\nNumber of words: ' + str(len(all_tokens)) + '\n')
+		f.write('------------------------------------------------------\n')
+		f.write(artist['name'] + '\n')
+		f.write('Lexical diversity: ' + str(lexical_diversity) + ' | ' + str(lexical_diversity_percentage) + '%\n')
+		f.write('Number of songs: ' + str(SCRAPED_COUNT) + '\n')
+		f.write('Number of words: ' + str(len(all_tokens)) + '\n')
 		f.write('------------------------------------------------------\n')
 		f.write(str(most_common_words).replace("[('", '').replace('[', '').replace(']', '').replace("('", '\n').replace("),", '').replace("', ", ',').replace(')', ''))
 
@@ -217,40 +224,40 @@ def analyze_lyrics(lyrics, artist):
 	fdist.plot(50)
 
 def main():
-	print('\nWelcome to the lyric analyzer!')
-	artist_name = raw_input("\nEnter an artist or band name: ")
+	print('\nWelcome to the lyric analyzer!\n')
+	artist_name = raw_input("Enter an artist or band name: ")
 
-	print('\nLooking up artist...')
+	print('\nLooking up artist...\n')
 	artist = get_artist_from_name(artist_name)
 
-	print('\nSetting up output files...')
+	print('Setting up output files...\n')
 	output_file = setup_output(artist)
 
 	song_limit = None
 	while not song_limit:
 	    try:
-	        song_limit = raw_input("\nHow many songs? ('all' for all songs): ").lower()
+	        song_limit = raw_input("How many songs? ('all' for all songs): ").lower()
 	        if (song_limit == "all"):
 	        	song_limit = 100000000000
-	        	print('\nFinding all songs by ' + artist['name'].upper() + '...')
+	        	print('\nFinding all songs by ' + artist['name'].upper() + '...\n')
 	        	songs = get_all_songs(artist)
 	        else:
 	        	song_limit = int(song_limit)
-	        	print('\nFinding the top ' + str(song_limit) + ' songs by ' + artist['name'].upper() + '...')
+	        	print('\nFinding the top ' + str(song_limit) + ' songs by ' + artist['name'].upper() + '...\n')
 	        	songs = get_limit_songs(artist, song_limit)
 	    except ValueError:
-        	print("Please enter a valid number or 'all'.")
+        	print("Please enter a valid number or 'all'.\n")
         	song_limit = None	
 	
-	print('\nFound ' + str(len(songs)) + ' songs.')
+	print('Found ' + str(len(songs)) + ' songs.\n')
 
-	print('\nScraping lyrics for each song...')
+	print('Scraping lyrics for each song...\n')
 	all_lyrics = get_all_lyrics(songs, artist, output_file)
 
-	print('\nFormatting lyrics for analysis...')
+	print('Formatting lyrics for analysis...\n')
 	formatted_lyrics = format_lyrics(all_lyrics)
 
-	print('\nAnalyzing lyrics...')
+	print('Analyzing lyrics...\n')
 	analyze_lyrics(formatted_lyrics, artist)
 
 if __name__ == '__main__':
