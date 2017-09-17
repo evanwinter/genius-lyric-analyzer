@@ -52,7 +52,5 @@ The following will occur:
 
 * Counts featured artists'/collaborators' lyrics too
 * Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
-* Organizational terms like "verse" and "chorus," and the artist's name itself are common and usually end up high on frequency distribution
-* Majority of the 50-ish most common words end up being boring words like "i," "the," "you," etc
-* Ignores any song with "tracklist" or "credits" in title, might result in skipping actual songs here and there
-
+* Doesn't always find the right artist: User searches artist name --> program executes a search using that exact input --> target artist is whoever the top result's primary artist is
+	** Ex: entering Slipknot when prompted for artist name will find the top result to be XXXTentacion's song title "slipknot", thus using XXXTentacion as the target artist instead.
