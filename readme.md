@@ -53,3 +53,12 @@ The following will occur:
 * Counts featured artists'/collaborators' lyrics too
 * Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
 * Doesn't always find the right artist: User searches artist name --> program executes a search using that exact input --> target artist is whoever the top result's primary artist is... Ex: entering Slipknot when prompted for artist name will find the top result to be an XXXTentacion song &mdash; titled "slipknot" &mdash; thus using XXXTentacion as the target artist instead.
+
+--
+
+### Features
+
+* Gather the lyrics to every song in an artist's catalogue (as it is on Genius.com, that is)
+* With the Natural Language Toolkit, plot the words used most frequently by that artist on a frequency distribution graph. (Overly common words are ommitted from the graph)
+* Calculate stats like number of songs, number of unique words and lexical diversity -- neatly outputted in a textfile.
+* Coming soon: Get the frequency of a specific word or phrase in an artists' catalogue.

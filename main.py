@@ -188,7 +188,7 @@ def setup_analysis_output( artist, songs ):
 	with open(analysis_output_file, 'w') as f:
 		f.write('------------------------------------------------------\n')
 		f.write(artist['name'] + '\n')
-		f.write('Number of songs: ' + str(len(songs)))
+		f.write('Number of songs: ' + str(len(songs)) + '\n')
 	return analysis_output_file
 
 def analyze_lyrics( lyrics, analysis_output_file ):
