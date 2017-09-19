@@ -26,14 +26,30 @@ def get_artist_from_name(artist_name):
 		print('No results for ' + artist_name + '.')
 		sys.exit('Exiting program.')
 	
-	artist = hits[0]['result']['primary_artist']
+	artist_results = []
 
+	for hit in hits:
+		artist_results.append(hit['result']['primary_artist']['name'])
+	
+	most_common_results = Counter(artist_results).most_common()
+
+	print(str(most_common_results))
+
+	# TODO make this not suck
+	target_artist = str(most_common_results[0]).replace("(u'", '').replace("', ", ',').replace(")", '\n').split(',')[0]
+
+	for hit in hits:
+		if hit['result']['primary_artist']['name'] == target_artist:
+			artist = hit['result']['primary_artist']
+			return artist
+
+	print('Error occurred. Going with first result for your raw search.')
 	return artist
 
 def setup_output(artist):
 	reload(sys)
 	sys.setdefaultencoding('utf8')
-	artist_name = re.sub(r"[^A-Za-z]+", '', artist['name'].lower())
+	artist_name = re.sub(r"[^A-Za-z0-9]+", '', artist['name'].lower())
 	if not os.path.exists('output/'):
 		os.makedirs('output/')
 	if not os.path.exists('output/' + artist_name + '/'):
@@ -71,6 +87,7 @@ def get_all_songs(artist):
 			next_page = False
 
 		all_songs += songs
+		print(str(len(all_songs)) + ' songs found.')
 
 	return all_songs
 
@@ -81,17 +98,19 @@ def get_limit_songs(artist, song_limit):
 	limit = song_limit
 	count = 0
 
+	songs = []
+
 	song_lyrics = ''
 	limit_lyrics = ''
 	limit_songs = []
 
-	while next_page and count < song_limit:
+	while next_page and len(songs) < limit:
 
 		artist_songs_url = api + '/artists/' + str(artist['id']) + '/songs'
 		params = {
 			'page': current_page,
 			'sort': 'popularity',
-			'per_page': 1
+			'per_page': 5
 		}
 		data = {}
 		res = requests.get(artist_songs_url, data=data, headers=headers, params=params)
@@ -106,6 +125,8 @@ def get_limit_songs(artist, song_limit):
 
 		limit_songs += songs
 		count += 1
+
+		print(str(len(limit_songs)) + ' songs found.')
 
 	return limit_songs
 	
@@ -179,11 +200,11 @@ def write_lyrics(song, lyrics, output_file):
 			f.write('Pageviews: ' + str(pageviews) + '\n')
 		except:
 			f.write('Pageview data unavailable.\n')
-		f.write('------------------------------------------------------\n')
+		f.write('------------------------------------------------------')
 		f.write(lyrics)
 
 def setup_analysis_output( artist, songs ):
-	artist_name = re.sub(r"[^A-Za-z]+", '', artist['name'].lower())
+	artist_name = re.sub(r"[^A-Za-z0-9]+", '', artist['name'].lower())
 	analysis_output_file = 'output/' + artist_name + '/' + artist_name + '-analysis.txt'
 	with open(analysis_output_file, 'w') as f:
 		f.write('------------------------------------------------------\n')
@@ -210,12 +231,24 @@ def analyze_lyrics( lyrics, analysis_output_file ):
 		f.write('------------------------------------------------------\n')
 		f.write(str(most_common_words).replace("[('", '').replace('[', '').replace(']', '').replace("('", '\n').replace("),", '').replace("', ", ',').replace(')', ''))
 
-#  TODO
-def lookup_word( word ):
+def lookup_word( word, analysis_output_file ):
 	print('Looking up the frequency of "' + word + '"...\n')
 
+	with open(analysis_output_file, 'r') as f:
+		for line in f:
+			split_line = line.split(',')
+			this_word = split_line[0]
+			if len(split_line) > 1:
+				this_frequency = split_line[1]
+			else:
+				this_frequency = 0
+			if this_word == word:
+				return this_frequency
+		print("Couldn't find that word in lyrics.")
+		return 0
+
 def plot_word_frequency( lyrics, artist ):
-	print("Plotting word frequency...")
+	print("\nPlotting word frequency...")
 	print("Close the pop-up window to continue.\n")
 	all_lyrics = lyrics
 	all_tokens = nltk.word_tokenize(all_lyrics)
@@ -252,13 +285,13 @@ def main():
 	print('\nLooking up artist...\n')
 	artist = get_artist_from_name(artist_name)
 
-	print('Setting up output files...\n')
+	print('Setting up output files for ' + artist['name'] + '...\n')
 	output_file = setup_output(artist)
 
 	song_limit = None
 	while not song_limit:
 	    try:
-	        song_limit = raw_input("How many songs? ('all' for all songs): ").lower()
+	        song_limit = raw_input("How many songs? (multiples of 5 or 'all' for all songs): ").lower()
 	        if (song_limit == "all"):
 	        	song_limit = 100000000000
 	        	print('\nFinding all songs by ' + artist['name'].upper() + '...\n')
@@ -273,49 +306,47 @@ def main():
 	
 	print('Found ' + str(len(songs)) + ' songs.\n')
 
-	print('Scraping lyrics for each song...\n')
+	print('Scraping lyrics for songs...')
 	all_lyrics = get_all_lyrics(songs, artist, output_file)
 
-	print('Formatting lyrics for analysis...\n')
+	print('Formatting lyrics for analysis...')
 	formatted_lyrics = format_lyrics(all_lyrics)
 
-	print("Setting up analysis output files...\n")
+	print("Setting up analysis output files...")
 	analysis_output_file = setup_analysis_output(artist, songs)
 
-	print("Pre-analyzing...\n")
+	print("Analyzing lyrics...")
 	analyze_lyrics(formatted_lyrics, analysis_output_file)
 
 	#  Get user choice.
-	print('What would you like to do?')
-	print('------------------------------------------------------')
-	print("(1) Look at word frequency distribution graph")
-	print("(2) Look up a word or phrase frequency")
-	print("(3) Print all song lyrics")
-	print("(4) Open analysis file")
-	print('------------------------------------------------------')
-	choice = str(raw_input("Enter your choice (1-4) or 'quit': "))
+	choice = ''
 	target = ''
-	quit = False
 
 	while choice != 'quit':
+
+		print('What would you like to do?')
+		print('------------------------------------------------------')
+		print("(1) Look at word frequency distribution graph")
+		print("(2) Look up a word frequency")
+		print("(3) Print all song lyrics")
+		print("(4) Open analysis file")
+		print('------------------------------------------------------')
+		choice = str(raw_input("Enter your choice (1-4) or 'quit': "))
+
 		if choice == "1":
 			plot_word_frequency(formatted_lyrics, artist)
 		elif choice == "2":
-			word = str(raw_input("What word would you like to look up? "))
-			lookup_word( word )
+			word = str(raw_input("\nEnter a word to look up here: "))
+			freq = str(lookup_word(word, analysis_output_file))
+			print("\nFrequency: " + freq + '\n')
 		elif choice == "3":
 			print(all_lyrics)
 		elif choice == "4":
 			open_analysis()
+		elif choice == "quit":
+			break
 		else:
-			choice = str(raw_input("Invalid input.\nEnter your choice (1-4): "))
-		print('------------------------------------------------------')
-		print("(1) Look at word frequency distribution graph")
-		print("(2) Look up a word or phrase frequency")
-		print("(3) Print all song lyrics")
-		print("(4) Open analysis file")
-		print('------------------------------------------------------')
-		choice = str(raw_input("Enter another choice (1-4) or 'quit': "))
+			choice = ''
 
 	sys.exit(-1)
 

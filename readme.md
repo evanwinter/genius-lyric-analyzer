@@ -38,8 +38,8 @@ The following will occur:
 
 ## To do
 
-* Look up frequency of individual words
-* regex used for file setup takes "A$AP Rocky" and makes it "aaprocky" -- possible to replace $'s with "S's?
+* Look up frequency of phrase
+* regex used for file setup takes "A$AP Rocky" and makes it "aaprocky" -- possible to replace $'s with "S's? also "24hrs" becomes "hrs"
 * ~~Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)~~
 * ~~tokenize artist name and filter from analysis -- always ends up in top 50~~
 * ~~Filter for "(Live", "[Live"~~
@@ -60,5 +60,6 @@ The following will occur:
 
 * Gather the lyrics to every song in an artist's catalogue (as it is on Genius.com, that is)
 * With the Natural Language Toolkit, plot the words used most frequently by that artist on a frequency distribution graph. (Overly common words are ommitted from the graph)
-* Calculate stats like number of songs, number of unique words and lexical diversity -- neatly outputted in a textfile.
-* Coming soon: Get the frequency of a specific word or phrase in an artists' catalogue.
+* Calculate stats like number of songs, number of unique words, pageviews of each song and lexical diversity -- neatly outputted in a textfile.
+* Get the frequency of a specific word in an artists' catalogue.
+* Coming soon: Get the frequency of a phrase.
