@@ -38,6 +38,8 @@ The following will occur:
 
 ## To do
 
+* for line in lyrics containing keyword, print line
+* Output as a webpage
 * Make stats more relative -- what percent 
 * Look up frequency of phrase
 * regex used for file setup takes "A$AP Rocky" and makes it "aaprocky" -- possible to replace $'s with "S's? also "24hrs" becomes "hrs"
