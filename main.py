@@ -14,48 +14,51 @@ genius_url = "http://genius.com"
 CLIENT_ACCESS_TOKEN = config.client_access_token
 headers = { 'Authorization': 'Bearer ' + CLIENT_ACCESS_TOKEN }
 
-def get_artist_from_name(artist_name):
+def get_artist_from_name(raw_artist_name):
 	search_url = api + "/search"
-	data = { 'q': artist_name }
+	data = { 'q': raw_artist_name }
 	res = requests.get(search_url, data=data, headers=headers)
-
 	response = res.json()
-	hits = response['response']['hits']
+	hits = response["response"]["hits"]
 	
+	# If the raw search yields no results at all...
 	if len(hits) == 0:
-		print('No results for ' + artist_name + '.')
-		sys.exit('Exiting program.')
+		print("No results for " + raw_artist_name + ".")
+		# TODO: Prompt for another search instead of exiting the program.
+		return 
 	
-	artist_results = []
+	artist_search_results = []
 
 	for hit in hits:
-		artist_results.append(hit['result']['primary_artist']['name'])
+		hit_id = hit["result"]["primary_artist"]["id"]
+		artist_search_results.append(hit_id)
 	
-	most_common_results = Counter(artist_results).most_common()
-
-	print(str(most_common_results))
+	# Target the primary artist responsible for the greatest number of songs yielded by the raw search.
+	# e.g. A search for 'Lil' will yield songs by Wanye AND Uzi. Target artist is whoever has most songs in results.
+	most_common_results = Counter(artist_search_results).most_common()
+	raw_target_artist = most_common_results[0]
 
 	# TODO make this not suck
-	target_artist = str(most_common_results[0]).replace("(u'", '').replace("', ", ',').replace(")", '\n').split(',')[0]
+	# format Counter results -- only want the name of the top artist
+	target_artist_id = str(raw_target_artist).replace("(", "").split(",")[0] # .replace("(u'", "").replace("', ", ',').replace(")", "").split(',')[0]
 
+	# Return the artist who matches the target artist name.
 	for hit in hits:
-		if hit['result']['primary_artist']['name'] == target_artist:
-			artist = hit['result']['primary_artist']
+		artist = hit["result"]["primary_artist"]
+		artist_id = str(artist["id"])
+		if artist_id == target_artist_id:
 			return artist
-
-	print('Error occurred. Going with first result for your raw search.')
-	return artist
 
 def setup_output(artist):
 	reload(sys)
-	sys.setdefaultencoding('utf8')
-	artist_name = re.sub(r"[^A-Za-z0-9]+", '', artist['name'].lower())
-	if not os.path.exists('output/'):
-		os.makedirs('output/')
-	if not os.path.exists('output/' + artist_name + '/'):
-		os.makedirs('output/' + artist_name + '/')
+	sys.setdefaultencoding("utf8")
+	stripped_artist_name = re.sub(r"[^A-Za-z0-9$]+", "", artist["name"].lower())
+	if not os.path.exists("output/"):
+		os.makedirs("output/")
+	if not os.path.exists("output/" + stripped_artist_name + "/"):
+		os.makedirs("output/" + stripped_artist_name + "/")
 
-	output_file = 'output/' + artist_name + '/' + artist_name + '-lyrics.txt'
+	output_file = "output/" + stripped_artist_name + "/" + stripped_artist_name + "-lyrics.txt"
 	return output_file
 
 def get_all_songs(artist):
@@ -63,22 +66,24 @@ def get_all_songs(artist):
 	current_page = 1
 	next_page = True
 
-	song_lyrics = ''
-	all_lyrics = ''
+	song_lyrics = ""
+	all_lyrics = ""
 	all_songs = []
 
 	while next_page:
 
-		artist_songs_url = api + '/artists/' + str(artist['id']) + '/songs'
+		print(str(len(all_songs)) + " songs found...")
+
+		artist_songs_url = api + "/artists/" + str(artist["id"]) + "/songs"
 		params = {
-			'page': current_page,
-			'sort': 'popularity',
-			'per_page': 50
+			"page": current_page,
+			"sort": "popularity",
+			"per_page": 50
 		}
 		data = {}
 		res = requests.get(artist_songs_url, data=data, headers=headers, params=params)
 		response = res.json()
-		songs = response['response']['songs']
+		songs = response["response"]["songs"]
 
 		if songs:
 			current_page += 1
@@ -87,7 +92,6 @@ def get_all_songs(artist):
 			next_page = False
 
 		all_songs += songs
-		print(str(len(all_songs)) + ' songs found.')
 
 	return all_songs
 
@@ -100,22 +104,22 @@ def get_limit_songs(artist, song_limit):
 
 	songs = []
 
-	song_lyrics = ''
-	limit_lyrics = ''
+	song_lyrics = ""
+	limit_lyrics = ""
 	limit_songs = []
 
 	while next_page and len(songs) < limit:
 
-		artist_songs_url = api + '/artists/' + str(artist['id']) + '/songs'
+		artist_songs_url = api + "/artists/" + str(artist["id"]) + "/songs"
 		params = {
-			'page': current_page,
-			'sort': 'popularity',
-			'per_page': 5
+			"page": current_page,
+			"sort": "popularity",
+			"per_page": 5
 		}
 		data = {}
 		res = requests.get(artist_songs_url, data=data, headers=headers, params=params)
 		response = res.json()
-		songs = response['response']['songs']
+		songs = response["response"]["songs"]
 
 		if songs:
 			current_page += 1
@@ -126,57 +130,62 @@ def get_limit_songs(artist, song_limit):
 		limit_songs += songs
 		count += 1
 
-		print(str(len(limit_songs)) + ' songs found.')
+		if songs:
+			print(str(len(limit_songs)) + " songs found.")
 
 	return limit_songs
 	
 def get_all_lyrics(songs, artist, output_file):
+	all_lyrics = ""
+	all_count = 0
+	count = 0
 	all_songs = songs
 	num_songs = len(all_songs)
-	all_lyrics = ''
-	count = 0
-	all_count = 0
 
 	for song in all_songs:
 		all_count += 1
-		print(str(all_count) + ' / ' + str(num_songs))		
-		print('Name: ' + str(song['title']))
-		if fits_criteria(song, artist):
+		print(str(all_count) + " / " + str(num_songs))
+		print("Title: " + str(song["title"]))
+		
+		if title_fits_criteria(song, artist):
+
 			song_lyrics = get_song_lyrics(song)
-			all_lyrics += song_lyrics
-			count += 1
 			write_lyrics(song, song_lyrics, output_file)
-			print('Stored lyrics for ' + song['title'] + ' at ' + str(output_file))
-			print(str(count) + ' songs stored.\n')
+			print("Stored lyrics for " + song["title"] + ".")
+
+			count += 1
+			print(str(count) + " songs stored.\n")
+
+			all_lyrics += song_lyrics
 
 	return all_lyrics
 
 def get_song_lyrics(song):
 	this_song = song
-	song_lyrics_url = genius_url + this_song['path']
+	song_lyrics_url = genius_url + this_song["path"]
 
 	page = requests.get(song_lyrics_url)
 	html = BeautifulSoup(page.text, "html.parser")
-	[h.extract() for h in html('script')]
+	[h.extract() for h in html("script")]
 
 	song_lyrics = html.find("div", class_="lyrics").get_text()
 
 	return song_lyrics
 
-def fits_criteria(song, artist):
+def title_fits_criteria(song, artist):
 	
 	passes_filter = True
 
-	title_filterwords = [ "tracklist", "credits", "[speech", "(speech", "speech]", "speech)", "(live", "[live", "album art", "remix", "reprise)", "reprise]", "live version", "version)", "version]", "radio edit", "interview", "[hook", "[booklet" ]
+	title_filterwords = [ "tracklist", "credits", "[speech", "(speech", "speech]", "speech)", "(live", "[live", "album art", "remix", "reprise)", "reprise]", "live version", "version)", "version]", "radio edit", "interview", "[hook", "[booklet", "live in", "live from", "(mix", "[mix", "mix)", "mix]" ]
 
-	if artist['id'] != song['primary_artist']['id']:
-		print('Not primary artist.\n')
+	if artist["id"] != song["primary_artist"]["id"]:
+		print("Not primary artist.\n")
 		passes_filter = False
 		return passes_filter
 	for filterword in title_filterwords:
-		if filterword in song['title'].lower():
-			print('Tracklist, credits, remix, live version or speech ignored.')
-			print('Flagged word: ' + filterword + '\n')
+		if filterword in song["title"].lower():
+			print("Tracklist, credits, remix, live version or speech ignored.")
+			print("Flagged word: " + filterword + "\n")
 			passes_filter = False
 			return passes_filter
 
@@ -185,31 +194,36 @@ def fits_criteria(song, artist):
 def format_lyrics(lyrics):
 	
 	formatted_lyrics = lyrics.split()
-	formatted_lyrics = [''.join(c for c in s if c not in string.punctuation) for s in formatted_lyrics]
+	formatted_lyrics = ["".join(c for c in s if c not in string.punctuation) for s in formatted_lyrics]
 	formatted_lyrics = [s.lower() for s in formatted_lyrics if s]
-	formatted_lyrics = str(formatted_lyrics).replace(', (', '\n').replace("',", '').replace("u'", '').replace("[", '').replace("']", '')
+	formatted_lyrics = str(formatted_lyrics).replace(", (", "").replace("',", "").replace("u'", "").replace("[", "").replace("']", "")
 
 	return formatted_lyrics
 
 def write_lyrics(song, lyrics, output_file):
-	with open(output_file, 'a') as f:
-		f.write('------------------------------------------------------\n')
-		f.write('Title: ' + song['title'] + '\n')
+	with open(output_file, "a") as f:
+		# write song header
+		f.write("------------------------------------------------------\n")
+		f.write("Title: " + song["title"] + "\n")
 		try:
-			pageviews = song['stats']['pageviews']
-			f.write('Pageviews: ' + str(pageviews) + '\n')
+			pageviews = song["stats"]["pageviews"]
+			f.write("Pageviews: " + str(pageviews) + "\n")
 		except:
-			f.write('Pageview data unavailable.\n')
-		f.write('------------------------------------------------------')
+			f.write("Pageview data unavailable.\n")
+		f.write("------------------------------------------------------\n")
+
+		# write lyrics
 		f.write(lyrics)
 
 def setup_analysis_output( artist, songs ):
-	artist_name = re.sub(r"[^A-Za-z0-9]+", '', artist['name'].lower())
-	analysis_output_file = 'output/' + artist_name + '/' + artist_name + '-analysis.txt'
-	with open(analysis_output_file, 'w') as f:
-		f.write('------------------------------------------------------\n')
-		f.write(artist['name'] + '\n')
-		f.write('Number of songs: ' + str(len(songs)) + '\n')
+	artist_name = artist["name"]
+	stripped_artist_name = re.sub(r"[^A-Za-z0-9$]+", "", artist_name.lower())
+	analysis_output_file = "output/" + stripped_artist_name + "/" + stripped_artist_name + "-analysis.txt"
+	with open(analysis_output_file, "w") as f:
+		# write analysis header
+		f.write("\n------------------------------------------------------\n")
+		f.write(artist_name + "\n")
+		f.write("Number of songs: " + str(len(songs)) + "\n")
 	return analysis_output_file
 
 def analyze_lyrics( lyrics, analysis_output_file ):
@@ -224,40 +238,40 @@ def analyze_lyrics( lyrics, analysis_output_file ):
 	lexical_diversity = float(num_unique_words) / num_words
 	lexical_diversity_percentage = lexical_diversity * 100
 
-	with open(analysis_output_file, 'a') as f:
-		f.write('Total number of words: ' + str(num_words) + '\n')
-		f.write('Number of unique words: ' + str(num_unique_words) + '\n')
-		f.write('Lexical diversity: ' + str(lexical_diversity_percentage) + '%\n')
+	with open(analysis_output_file, "a") as f:
+		f.write("Total number of words: " + str(num_words) + "\n")
+		f.write("Number of unique words: " + str(num_unique_words) + "\n")
+		f.write("Lexical diversity: " + str(lexical_diversity_percentage) + "%\n")
 		f.write('------------------------------------------------------\n')
-		f.write(str(most_common_words).replace("[('", '').replace('[', '').replace(']', '').replace("('", '\n').replace("),", '').replace("', ", ',').replace(')', ''))
+		f.write("\nword,frequency\n----\n")
+		f.write(str(most_common_words).replace("[('", "").replace("[", "").replace("]", "").replace("('", '\n').replace("),", "").replace("', ", ',').replace(")", "") + "\n")
 
-def lookup_word( word, analysis_output_file ):
-	print('Looking up the frequency of "' + word + '"...\n')
+def lookup_word_frequency( word, analysis_output_file ):
 
-	with open(analysis_output_file, 'r') as f:
+	with open(analysis_output_file, "r") as f:
 		for line in f:
-			split_line = line.split(',')
+			split_line = line.split(",")
 			this_word = split_line[0]
 			if len(split_line) > 1:
-				this_frequency = split_line[1]
+				this_frequency = split_line[1].replace("\n", "")
 			else:
 				this_frequency = 0
 			if this_word == word:
 				return this_frequency
-		print("Couldn't find that word in lyrics.")
+		print("\nCouldn't find that word in lyrics.")
 		return 0
 
 def plot_word_frequency( lyrics, artist ):
-	print("\nPlotting word frequency...")
-	print("Close the pop-up window to continue.\n")
+	print("Plotting word frequency...")
+	print("Close the pop-up window to continue.")
 	all_lyrics = lyrics
 	all_tokens = nltk.word_tokenize(all_lyrics)
 
 	# set up filters
-	boring_words = [ 'the', 'i', 'you', 'and', 'me', 'a', 'it', 'im', 'my', 'to', 'on', 'in', 'that', 'wan', 'na', 'is', 'your', 'so', 'of', 'its', 'for', 'at' ]
-	digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-	song_structure_words = [ '[intro', '[verse', '[chorus', '[hook', '[prechorus', '[bridge', 'intro', 'verse', 'chorus', 'hook', 'prechorus' ]
-	artist_names = nltk.word_tokenize(str(artist['name']).lower())
+	boring_words = [ "the", "i", "you", "and", "me", "a", "it", "im", "my", "to", "on", "in", "that", "wan", "na", "is", "your", "so", "of", "its", "for", "at" ]
+	digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+	song_structure_words = [ "[intro", "[verse", "[chorus", "[hook", "[prechorus", "[bridge", "intro", "verse", "chorus", "hook", "prechorus" ]
+	artist_names = nltk.word_tokenize(str(artist["name"]).lower())
 
 	filtered_tokens = [ x for x in all_tokens if ((x not in boring_words) and (x not in song_structure_words) and (x not in digits) and (x not in artist_names)) ]
 
@@ -268,87 +282,102 @@ def plot_word_frequency( lyrics, artist ):
 	fdist.plot(num_to_plot)
 
 #  TODO
-def print_lyrics():
-	print("Printing lyrics...\n")
-
-#  TODO
-def open_analysis():
-	print("Open analysis\n")
-
+def print_analysis(analysis_output_file):
+	with open(analysis_output_file, "r") as f:
+		print(f.read())
 
 def main():
-	print('\nWelcome to the lyric analyzer!\n')
+	print("\nWelcome to the lyric analyzer!")
 
-	# Get artist and collect their data
-	artist_name = raw_input("Enter an artist or band name: ")
+	quit = False
 
-	print('\nLooking up artist...\n')
-	artist = get_artist_from_name(artist_name)
+	while quit is False:
 
-	print('Setting up output files for ' + artist['name'] + '...\n')
-	output_file = setup_output(artist)
+		# Get artist and collect their data
+		proceed = ""
+		while proceed is not "y":
+			artist = None
+			while artist is None:
+				raw_artist_name = raw_input("Enter an artist or band name: ")
+				artist = get_artist_from_name(raw_artist_name)
+			artist_name = artist["name"]
 
-	song_limit = None
-	while not song_limit:
-	    try:
-	        song_limit = raw_input("How many songs? (multiples of 5 or 'all' for all songs): ").lower()
-	        if (song_limit == "all"):
-	        	song_limit = 100000000000
-	        	print('\nFinding all songs by ' + artist['name'].upper() + '...\n')
-	        	songs = get_all_songs(artist)
-	        else:
-	        	song_limit = int(song_limit)
-	        	print('\nFinding the top ' + str(song_limit) + ' songs by ' + artist['name'].upper() + '...\n')
-	        	songs = get_limit_songs(artist, song_limit)
-	    except ValueError:
-        	print("Please enter a valid number or 'all'.\n")
-        	song_limit = None
-	
-	print('Found ' + str(len(songs)) + ' songs.\n')
+			proceed = str(raw_input("\nDid you mean " + artist_name + "? (y/n) "))
 
-	print('Scraping lyrics for songs...')
-	all_lyrics = get_all_lyrics(songs, artist, output_file)
+		output_file = setup_output(artist)
 
-	print('Formatting lyrics for analysis...')
-	formatted_lyrics = format_lyrics(all_lyrics)
+		# Set song_limit to None to activate song limits.
+		song_limit = 1
+		while not song_limit:
+		    try:
+		        song_limit = raw_input("How many songs? (Choose a multiple of 5 or 'all' for all songs): ").lower()
+		        if (song_limit == "all"):
+		        	song_limit = 100000000000
+		        	print('Getting all songs by ' + artist_name + '...')
+		        	songs = get_all_songs(artist)
+		        else:
+		        	song_limit = int(song_limit)
+		        	print('Getting the top ' + str(song_limit) + ' songs by ' + artist_name.upper() + '...')
+		        	songs = get_limit_songs(artist, song_limit)
+		    except ValueError:
+	        	print("Please enter a valid number or 'all'.")
+	        	song_limit = None
 
-	print("Setting up analysis output files...")
-	analysis_output_file = setup_analysis_output(artist, songs)
+	 	print("Finding songs by " + artist_name + "...\n(This may take a minute)\n")
+	 	songs = get_all_songs(artist)
+		
+		print("Found " + str(len(songs)) + " songs in total.\n")
 
-	print("Analyzing lyrics...")
-	analyze_lyrics(formatted_lyrics, analysis_output_file)
+		print("Getting lyrics...\n")
+		all_lyrics = get_all_lyrics(songs, artist, output_file)
 
-	#  Get user choice.
-	choice = ''
-	target = ''
+		print("Preparing lyrics for analysis...")
+		formatted_lyrics = format_lyrics(all_lyrics)
 
-	while choice != 'quit':
+		print("Setting up analysis output files...")
+		analysis_output_file = setup_analysis_output(artist, songs)
 
-		print('What would you like to do?')
-		print('------------------------------------------------------')
-		print("(1) Look at word frequency distribution graph")
-		print("(2) Look up a word frequency")
-		print("(3) Print all song lyrics")
-		print("(4) Open analysis file")
-		print('------------------------------------------------------')
-		choice = str(raw_input("Enter your choice (1-4) or 'quit': "))
+		print("Analyzing lyrics...")
+		analyze_lyrics(formatted_lyrics, analysis_output_file)
 
-		if choice == "1":
-			plot_word_frequency(formatted_lyrics, artist)
-		elif choice == "2":
-			word = str(raw_input("\nEnter a word to look up here: "))
-			freq = str(lookup_word(word, analysis_output_file))
-			print("\nFrequency: " + freq + '\n')
-		elif choice == "3":
-			print(all_lyrics)
-		elif choice == "4":
-			open_analysis()
-		elif choice == "quit":
-			break
-		else:
-			choice = ''
+		#  Get user choice.
+		choice = ""
 
-	sys.exit(-1)
+		while choice != "quit":
 
-if __name__ == '__main__':
+			print("\n[" + artist_name + "] | What would you like to do?")
+			print("------------------------------------------------------")
+			print("(1) Look at word frequency distribution graph")
+			print("(2) Look up a word frequency")
+			print("(3) Print all song lyrics")
+			print("(4) Print analysis file\n")
+			choice = str(raw_input("Enter your choice (1-4) or 'quit': "))
+
+			if choice == "1":
+				plot_word_frequency(formatted_lyrics, artist)
+			elif choice == "2":
+				word = str(raw_input("Enter a word to look up: "))
+				freq = lookup_word_frequency(word, analysis_output_file)
+				print("\n****************")
+				print("Frequency: " + str(freq))
+				print("****************")
+			elif choice == "3":
+				print(all_lyrics)
+			elif choice == "4":
+				print_analysis(analysis_output_file)
+			elif choice == "quit":
+				break
+			else:
+				choice = ""
+
+		y = ""
+		while y is not "y":
+			if y is "n":
+				print("Goodbye.")
+				sys.exit(-1)
+			else:
+				y = str(raw_input("Would you like to try another artist? (y/n) "))
+
+
+if __name__ == "__main__":
 	main()
