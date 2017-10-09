@@ -1,6 +1,12 @@
 # Genius Lyric Analyzer
 
+## What does it do?
 
+This program takes an artist or band name and performs basic text analysis on the lyrics to all of their songs. You can look up the frequency of individual words, calculate their overall diversity of word choice, and create basic data visualizations of this information.
+
+1. Gets the lyrics to every song by the target artist (the ones with lyrics on Genius.com, that is) and stores them in a text file.
+2. Analyzes the lyrics and calculates the frequency of each word used as well as the artist's overall [lexical diversity](https://en.wikipedia.org/wiki/Lexical_diversity) and stores that information in a different text file.
+3. Presents the user with options: (1) Plot the word frequency in a frequency distribution plot, (2) Print an individual word's frequency to the console, (3) Print all song lyrics to the console, (4) Print the analysis text file created in step 2, and (5) Populate an HTML template with this artist's information and open it in a browser.
 
 ## Usage
 
@@ -38,6 +44,7 @@ The following will occur:
 
 ## To do
 
+* Formatting on HTML template.
 * Javascript rewrite. Get it to run in browser
 * Give context to lyrics during reverse lookup -- something along the lines of `for line in lyrics containing keyword, print line`
 * Reverse lookup phrase frequency
@@ -70,13 +77,3 @@ The following will occur:
   File "main.py", line 172, in get_song_lyrics
     song_lyrics = html.find("div", class_="lyrics").get_text()
 AttributeError: 'NoneType' object has no attribute 'get_text'`
-
---
-
-### Features
-
-* Gather the lyrics to every song in an artist's catalogue (as it is on Genius.com, that is)
-* With the Natural Language Toolkit, plot the words used most frequently by that artist on a frequency distribution graph. (Overly common words are ommitted from the graph)
-* Calculate stats like number of songs, number of unique words, pageviews of each song and lexical diversity -- neatly outputted in a textfile.
-* Get the frequency of a specific word in an artists' catalogue.
-* Coming soon: Get the frequency of a phrase.
