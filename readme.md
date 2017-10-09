@@ -38,28 +38,29 @@ The following will occur:
 
 ## To do
 
-* for line in lyrics containing keyword, print line
-* Output as a webpage
-* Make stats more relative -- what percent 
-* Look up frequency of phrase
-* regex used for file setup takes "A$AP Rocky" and makes it "aaprocky" -- possible to replace $'s with "S's? also "24hrs" becomes "hrs"
+* Javascript rewrite. Get it to run in browser
+* Give context to lyrics during reverse lookup -- something along the lines of `for line in lyrics containing keyword, print line`
+* Reverse lookup phrase frequency
+* Output as a better webpage ~~Output as a webpage~~
+* Make stats relative -- percentages etc. Need to adjust for differences in number of songs, etc 
+* replace $'s with "S's - "A$AP Rocky" becomes "aaprocky" right now ~~also "24hrs" becomes "hrs"~~
 * ~~Filter out boring/extremely common words before doing data visualization (but after writing most common words to text file)~~
 * ~~tokenize artist name and filter from analysis -- always ends up in top 50~~
 * ~~Filter for "(Live", "[Live"~~
 * ~~Calculate lexical diversity (unique words / all words)~~
 * Better data visualization -- D3.js an option?
-* Get it to run in browser
 * ~~New folder for each artist's lyrics, analysis and plot i.e. `output/artistname/`~~
 
 ## Known issues/limitations/areas for improvement (probably won't fix)
 
 * Counts featured artists'/collaborators' lyrics too
 * Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
-* Doesn't always find the right artist: User searches artist name --> program executes a search using that exact input --> target artist is whoever the top result's primary artist is... Ex: entering Slipknot when prompted for artist name will find the top result to be an XXXTentacion song &mdash; titled "slipknot" &mdash; thus using XXXTentacion as the target artist instead.
+* ~~Doesn't always find the right artist: User searches artist name --> program executes a search using that exact input --> target artist is whoever the top result's primary artist is... Ex: entering Slipknot when prompted for artist name will find the top result to be an XXXTentacion song &mdash; titled "slipknot" &mdash; thus using XXXTentacion as the target artist instead.~~
 
 ## Bugs (will fix)
 
-* Traceback (most recent call last):
+
+* `Traceback (most recent call last):
   File "main.py", line 411, in <module>
     main()
   File "main.py", line 357, in main
@@ -68,7 +69,7 @@ The following will occur:
     song_lyrics = get_song_lyrics(song)
   File "main.py", line 172, in get_song_lyrics
     song_lyrics = html.find("div", class_="lyrics").get_text()
-AttributeError: 'NoneType' object has no attribute 'get_text'
+AttributeError: 'NoneType' object has no attribute 'get_text'`
 
 --
 
