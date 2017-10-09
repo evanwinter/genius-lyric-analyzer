@@ -1,5 +1,3 @@
-# Genius Lyric Analyzer
-
 ## What does it do?
 
 This program takes an artist or band name and performs basic text analysis on the lyrics to all of their songs. You can look up the frequency of individual words, calculate their overall diversity of word choice, and create basic data visualizations of this information.
