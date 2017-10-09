@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 import string
 import nltk
+import webbrowser
 
 api = "https://api.genius.com"
 genius_url = "http://genius.com"
@@ -286,10 +287,34 @@ def print_analysis(analysis_output_file):
 	with open(analysis_output_file, "r") as f:
 		print(f.read())
 
+def create_HTML(artist, output_file, analysis_output_file):
+	artist_name = artist["name"]
+	stripped_artist_name = re.sub(r"[^A-Za-z0-9$]+", "", artist_name.lower())
+
+	html_output_file = "output/" + stripped_artist_name + "/" + stripped_artist_name + ".html"
+	with open(output_file, 'r') as outf:
+		lyrics = outf.read()
+
+	with open(analysis_output_file, 'r') as aoutf:
+		analysis = aoutf.read()
+
+	with open(html_output_file, 'w') as f:
+		f.write("<link href='../../styles.css' rel='stylesheet' type='text/css'>")
+		f.write(
+			"<nav><a href='#lyrics'><li>Lyrics</li></a><a href='#analysis'><li>Analysis</li></a><a href='#plot'><li>Plot</li></a></nav><h1> " + artist_name + " </h1><section id='lyrics'><h3>Lyrics</h3><div> " + lyrics + " </div></section><br><section id='analysis'><h3>Analysis</h3><div> " + analysis + " </div></section><section id='plot'><h3>Frequency Distribution Plot</h3><img src=''></section>"
+		)
+
+	webbrowser.open('file://' + os.path.realpath(html_output_file))
+	return html_output_file
+
 def main():
-	print("\nWelcome to the lyric analyzer!")
+	
+	print("\n----------------------------------")
+	print("| Welcome to the lyric analyzer! |")
+	print("----------------------------------")
 
 	quit = False
+	artist = None
 
 	while quit is False:
 
@@ -298,9 +323,9 @@ def main():
 		while proceed is not "y":
 			artist = None
 			while artist is None:
-				raw_artist_name = raw_input("Enter an artist or band name: ")
+				raw_artist_name = raw_input("\nEnter an artist or band name: ")
 				artist = get_artist_from_name(raw_artist_name)
-			artist_name = artist["name"]
+			artist_name = artist["name"].encode('utf-8')
 
 			proceed = str(raw_input("\nDid you mean " + artist_name + "? (y/n) "))
 
@@ -323,7 +348,7 @@ def main():
 	        	print("Please enter a valid number or 'all'.")
 	        	song_limit = None
 
-	 	print("Finding songs by " + artist_name + "...\n(This may take a minute)\n")
+	 	print("\nFinding songs by " + artist_name + "...\n(This may take a minute)\n")
 	 	songs = get_all_songs(artist)
 		
 		print("Found " + str(len(songs)) + " songs in total.\n")
@@ -350,8 +375,9 @@ def main():
 			print("(1) Look at word frequency distribution graph")
 			print("(2) Look up a word frequency")
 			print("(3) Print all song lyrics")
-			print("(4) Print analysis file\n")
-			choice = str(raw_input("Enter your choice (1-4) or 'quit': "))
+			print("(4) Print analysis file")
+			print("(5) Create HTML page from template")
+			choice = str(raw_input("\nEnter your choice (1-5) or 'quit': "))
 
 			if choice == "1":
 				plot_word_frequency(formatted_lyrics, artist)
@@ -365,6 +391,8 @@ def main():
 				print(all_lyrics)
 			elif choice == "4":
 				print_analysis(analysis_output_file)
+			elif choice == "5":
+				create_HTML(artist, output_file, analysis_output_file)
 			elif choice == "quit":
 				break
 			else:

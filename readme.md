@@ -4,7 +4,7 @@
 
 ## Usage
 
-In your terminal, run the following prompts:
+In your terminal, run the following commands:
 
 * `git clone https://github.com/evanwinter/genius-scrape.git`
 
@@ -56,6 +56,19 @@ The following will occur:
 * Counts featured artists'/collaborators' lyrics too
 * Because each token is stripped of punctuation and transformed to lowercase, "I'll" & "ill" are both counted as "ill", etc
 * Doesn't always find the right artist: User searches artist name --> program executes a search using that exact input --> target artist is whoever the top result's primary artist is... Ex: entering Slipknot when prompted for artist name will find the top result to be an XXXTentacion song &mdash; titled "slipknot" &mdash; thus using XXXTentacion as the target artist instead.
+
+## Bugs (will fix)
+
+* Traceback (most recent call last):
+  File "main.py", line 411, in <module>
+    main()
+  File "main.py", line 357, in main
+    all_lyrics = get_all_lyrics(songs, artist, output_file)
+  File "main.py", line 153, in get_all_lyrics
+    song_lyrics = get_song_lyrics(song)
+  File "main.py", line 172, in get_song_lyrics
+    song_lyrics = html.find("div", class_="lyrics").get_text()
+AttributeError: 'NoneType' object has no attribute 'get_text'
 
 --
 

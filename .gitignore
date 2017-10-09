@@ -5,3 +5,4 @@ config.pyc
 *.txt
 /output
 /gitignore
+/__pycache__
