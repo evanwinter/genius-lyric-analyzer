@@ -4,6 +4,8 @@
 
 This program takes an artist or band name and performs basic text analysis on the lyrics to all of their songs. You can look up the frequency of individual words, calculate their overall diversity of word choice, and create basic data visualizations of this information.
 
+More specifically:
+
 1. Gets the lyrics to every song by the target artist (the ones with lyrics on Genius.com, that is) and stores them in a text file.
 2. Analyzes the lyrics and calculates the frequency of each word used as well as the artist's overall [lexical diversity](https://en.wikipedia.org/wiki/Lexical_diversity) and stores that information in a different text file.
 3. Presents the user with options: (1) Plot the word frequency in a frequency distribution plot, (2) Print an individual word's frequency to the console, (3) Print all song lyrics to the console, (4) Print the analysis text file created in step 2, and (5) Populate an HTML template with this artist's information and open it in a browser.
